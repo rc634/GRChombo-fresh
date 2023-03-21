@@ -13,7 +13,7 @@
 // Problem specific includes:
 #include "BosonStarParams.hpp"
 #include "ComplexPotential.hpp"
-//#include "GaussianFitTrackingParams.hpp" //obsolete
+
 #include "AngMomFluxParams.hpp"
 
 class SimulationParameters : public SimulationParametersBase
