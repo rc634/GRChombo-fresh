@@ -3,11 +3,11 @@
  * Please refer to LICENSE in GRChombo's root directory.
  */
 
-#ifndef COMPLEXSCALARFIELD_HPP_
-#define COMPLEXSCALARFIELD_HPP_
+#ifndef EINSTEINMAXWELLDILATONFIELD_HPP_
+#define EINSTEINMAXWELLDILATONFIELD_HPP_
 
 #include "CCZ4Geometry.hpp"
-#include "DefaultComplexPotential.hpp"
+#include "DefaultEMDCouplingFunction.hpp"
 #include "FourthOrderDerivatives.hpp"
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"
@@ -17,45 +17,61 @@
 //!  Calculates the matter type specific elements such as the EMTensor and
 //   matter evolution
 
-template <class potential_t = DefaultComplexPotential> class ComplexScalarField
+template <class coupling_t = DefaultEMDCouplingFunction>
+                                              class EinsteinMaxwellDilatonField
 {
   protected:
-    //! The local copy of the potential
-    potential_t my_potential;
+    //! The local copy of the coupling
+    coupling_t my_coupling;
 
   public:
-    //!  Constructor of class ScalarField, inputs are the matter parameters.
-    ComplexScalarField(const potential_t a_potential)
-        : my_potential(a_potential)
+    //!  Constructor of class EinsteinMaxwellDilaton field, inputs are the matter parameters.
+    EinsteinMaxwellDilatonField(const coupling_t a_coupling)
+        : my_coupling(a_coupling)
     {
     }
 
     //! Structure containing the variables for the matter fields
-    template <class data_t> struct CSFObject
+    template <class data_t> struct EMDObject
     {
-        data_t phi_Re;
-        data_t phi_Im;
-        data_t Pi_Re;
-        data_t Pi_Im;
+        data_t phi;
+        data_t Pi;
+        data_t At;
+        data_t ax;
+        data_t ay;
+        data_t az;
+        data_t Ex;
+        data_t Ey;
+        data_t Ez;
     };
 
     //! Structure containing the rhs variables for the matter fields
     template <class data_t> struct Vars
     {
-        data_t phi_Re;
-        data_t phi_Im;
-        data_t Pi_Re;
-        data_t Pi_Im;
+      data_t phi;
+      data_t Pi;
+      data_t At;
+      data_t ax;
+      data_t ay;
+      data_t az;
+      data_t Ex;
+      data_t Ey;
+      data_t Ez;
 
         /// Defines the mapping between members of Vars and Chombo grid
         /// variables (enum in User_Variables)
         template <typename mapping_function_t>
         void enum_mapping(mapping_function_t mapping_function)
         {
-            VarsTools::define_enum_mapping(mapping_function, c_phi_Re, phi_Re);
-            VarsTools::define_enum_mapping(mapping_function, c_phi_Im, phi_Im);
-            VarsTools::define_enum_mapping(mapping_function, c_Pi_Re, Pi_Re);
-            VarsTools::define_enum_mapping(mapping_function, c_Pi_Im, Pi_Im);
+            VarsTools::define_enum_mapping(mapping_function, c_phi, phi);
+            VarsTools::define_enum_mapping(mapping_function, c_Pi, Pi);
+            VarsTools::define_enum_mapping(mapping_function, c_At, At);
+            VarsTools::define_enum_mapping(mapping_function, c_ax, ax);
+            VarsTools::define_enum_mapping(mapping_function, c_ay, ay);
+            VarsTools::define_enum_mapping(mapping_function, c_az, az);
+            VarsTools::define_enum_mapping(mapping_function, c_Ex, Ex);
+            VarsTools::define_enum_mapping(mapping_function, c_Ey, Ey);
+            VarsTools::define_enum_mapping(mapping_function, c_Ez, Ez);
         }
     };
 
@@ -63,21 +79,25 @@ template <class potential_t = DefaultComplexPotential> class ComplexScalarField
     //!  2nd derivs
     template <class data_t> struct Diff2Vars
     {
-        data_t phi_Re;
-        data_t phi_Im;
+        data_t phi;
+        data_t ax;
+        data_t ay;
+        data_t az;
 
         /// Defines the mapping between members of Vars and Chombo grid
         ///  variables (enum in User_Variables)
         template <typename mapping_function_t>
         void enum_mapping(mapping_function_t mapping_function)
         {
-            VarsTools::define_enum_mapping(mapping_function, c_phi_Re, phi_Re);
-            VarsTools::define_enum_mapping(mapping_function, c_phi_Im, phi_Im);
+            VarsTools::define_enum_mapping(mapping_function, c_phi, phi);
+            VarsTools::define_enum_mapping(mapping_function, c_ax, ax);
+            VarsTools::define_enum_mapping(mapping_function, c_ay, ay);
+            VarsTools::define_enum_mapping(mapping_function, c_az, az);
         }
     };
 
     //! The function which calculates the EM Tensor, given the vars and
-    //! derivatives, including the potential
+    //! derivatives, including the coupling
     template <class data_t, template <typename> class vars_t>
     emtensor_t<data_t> compute_emtensor(
         const vars_t<data_t> &vars,          //!< the value of the variables
@@ -87,22 +107,20 @@ template <class potential_t = DefaultComplexPotential> class ComplexScalarField
         const; //!< the conformal christoffel symbol
 
     //! The function which calculates the EM Tensor, given the vars and
-    //! derivatives, excluding the potential
+    //! derivatives, excluding the coupling
     template <class data_t, template <typename> class vars_t>
-    static void emtensor_excl_potential(
+    static void emtensor_excl_coupling(
         emtensor_t<data_t> &out,           //!< the em tensor output
         const vars_t<data_t> &vars,        //!< the value of the variables
-        const CSFObject<data_t> &vars_csf, //!< the value of the csf variables
+        const EMDObject<data_t> &vars_emd, //!< the value of the emd variables
         const Tensor<1, data_t>
-            &d1_phi_Re, //!< the value of the first deriv of phi_Re
-        const Tensor<1, data_t>
-            &d1_phi_Im, //!< the value of the first deriv of phi_Im
+            &d1_phi, //!< the value of the first deriv of phi
         const Tensor<2, data_t> &h_UU, //!< the inverse metric (raised indices).
         const Tensor<3, data_t>
             &chris_ULL); //!< the conformal christoffel symbol
 
     //! The function which adds in the RHS for the matter field vars,
-    //! including the potential
+    //! including the coupling
     template <class data_t, template <typename> class vars_t,
               template <typename> class diff2_vars_t,
               template <typename> class rhs_vars_t>
@@ -115,26 +133,36 @@ template <class potential_t = DefaultComplexPotential> class ComplexScalarField
         const;
 
     //! The function which calculates the RHS for the matter field vars
-    //! excluding the potential
+    //! excluding the coupling
     template <class data_t, template <typename> class vars_t>
-    static void matter_rhs_excl_potential(
-        CSFObject<data_t>
-            &rhs_csf, //!< the value of the RHS terms for the sf vars
+    static void matter_rhs_excl_coupling(
+        EMDObject<data_t>
+            &rhs_emd, //!< the value of the RHS terms for the sf vars
         const vars_t<data_t> &vars,        //!< the values of all the variables
-        const CSFObject<data_t> &vars_csf, //!< the value of the sf variables
+        const EMDObject<data_t> &vars_emd, //!< the value of the sf variables
         const vars_t<Tensor<1, data_t>> &d1, //!< the value of the 1st derivs
         const Tensor<1, data_t>
-            &d1_phi_Re, //!< the value of the 1st derivs of phi_Re
+            &d1_phi, //!< the value of the 1st derivs of phi
         const Tensor<1, data_t>
-            &d1_phi_Im, //!< the value of the 1st derivs of phi_Im
+            &d1_ax,
+        const Tensor<1, data_t>
+            &d1_ay,
+        const Tensor<1, data_t>
+            &d1_az,
         const Tensor<2, data_t>
-            &d2_phi_Re, //!< the value of the 2nd derivs of phi_Re
+            &d2_phi, //!< the value of the 2nd derivs of phi
         const Tensor<2, data_t>
-            &d2_phi_Im, //!< the value of the 2nd derivs of phi_Im
-        const CSFObject<data_t>
-            &advec_csf); //!< advection terms for the csf vars
+            &d2_ax,
+        const Tensor<2, data_t>
+            &d2_ay,
+        const Tensor<2, data_t>
+            &d2_az,
+        const Tensor<1, data_t>
+            &d1_At,
+        const EMDObject<data_t>
+            &advec_emd); //!< advection terms for the emd vars
 };
 
-#include "ComplexScalarField.impl.hpp"
+#include "EinsteinMaxwellDilatonField.impl.hpp"
 
-#endif /* COMPLEXSCALARFIELD_HPP_ */
+#endif /* EINSTEINMAXWELLDILATONFIELD_HPP_ */

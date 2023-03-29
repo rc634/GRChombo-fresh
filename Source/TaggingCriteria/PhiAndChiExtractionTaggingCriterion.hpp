@@ -3,18 +3,18 @@
  * Please refer to LICENSE in GRChombo's root directory.
  */
 
-#ifndef COMPLEXPHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_
-#define COMPLEXPHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_
+#ifndef PHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_
+#define PHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_
 
 #include "Cell.hpp"
-#include "ComplexScalarField.hpp"
+#include "EinsteinMaxwellDilatonField.hpp"
 #include "Coordinates.hpp"
 #include "DimensionDefinitions.hpp"
 #include "FourthOrderDerivatives.hpp"
 #include "SimulationParametersBase.hpp"
 #include "Tensor.hpp"
 
-class ComplexPhiAndChiExtractionTaggingCriterion
+class PhiAndChiExtractionTaggingCriterion
 {
   protected:
     const double m_dx;
@@ -25,7 +25,8 @@ class ComplexPhiAndChiExtractionTaggingCriterion
     const double m_threshold_chi;
 
     template <class data_t>
-    using MatterVars = typename ComplexScalarField<>::template Vars<data_t>;
+    using MatterVars =
+                  typename EinsteinMaxwellDilatonField<>::template Vars<data_t>;
 
     // Vars object for chi
     template <class data_t> struct Vars
@@ -42,7 +43,7 @@ class ComplexPhiAndChiExtractionTaggingCriterion
     };
 
   public:
-    ComplexPhiAndChiExtractionTaggingCriterion(
+    PhiAndChiExtractionTaggingCriterion(
         const double a_dx, const int a_level,
         const extraction_params_t a_params, const double a_threshold_phi,
         const double a_threshold_chi)
@@ -60,21 +61,16 @@ class ComplexPhiAndChiExtractionTaggingCriterion
         data_t d2_phi_ratio = 0.;
         data_t d2_chi_ratio = 0.;
 
-        FOR2(idir, jdir)
+        FOR2(i, j)
         {
-            data_t mod_d2_Pi_ij = d2.Pi_Re[idir][jdir] * d2.Pi_Re[idir][jdir] +
-                                  d2.Pi_Im[idir][jdir] * d2.Pi_Im[idir][jdir];
-            data_t mod_d2_phi_ij =
-                d2.phi_Re[idir][jdir] * d2.phi_Re[idir][jdir] +
-                d2.phi_Im[idir][jdir] * d2.phi_Im[idir][jdir];
-            data_t abs_d1d1_Pi_ij = abs(d1.Pi_Re[idir] * d1.Pi_Re[jdir] +
-                                        d1.Pi_Im[idir] * d1.Pi_Im[jdir]);
-            data_t abs_d1d1_phi_ij = abs(d1.phi_Re[idir] * d1.phi_Re[jdir] +
-                                         d1.phi_Im[idir] * d1.phi_Im[jdir]);
+            data_t mod_d2_Pi_ij = d2.Pi[i][j] * d2.Pi[i][j];
+            data_t mod_d2_phi_ij = d2.phi[i][j] * d2.phi[i][j];
+            data_t abs_d1d1_Pi_ij = abs(d1.Pi[i] * d1.Pi[j]);
+            data_t abs_d1d1_phi_ij = abs(d1.phi[i] * d1.phi[j]);
             d2_phi_ratio += mod_d2_Pi_ij / (abs_d1d1_Pi_ij + 1e-5) +
                             mod_d2_phi_ij / (abs_d1d1_phi_ij + 1e-5);
-            d2_chi_ratio += d2chi.chi[idir][jdir] * d2chi.chi[idir][jdir] /
-                            (1e-2 + abs(d1chi.chi[idir] * d1chi.chi[jdir]));
+            d2_chi_ratio += d2chi.chi[i][j] * d2chi.chi[i][j] /
+                            (1e-2 + abs(d1chi.chi[i] * d1chi.chi[j]));
         }
 
         data_t criterion_phi = m_dx * sqrt(d2_phi_ratio) / m_threshold_phi;
@@ -104,4 +100,4 @@ class ComplexPhiAndChiExtractionTaggingCriterion
     }
 };
 
-#endif /* COMPLEXPHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_ */
+#endif /* PHIANDCHIEXTRACTIONTAGGINGCRITERION_HPP_ */
