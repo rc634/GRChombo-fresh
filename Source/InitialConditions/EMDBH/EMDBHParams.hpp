@@ -14,6 +14,7 @@ struct EMDBH_params_t
     int gridpoints;
     double separation;
     double bh_charge;
+    double bh_mass;
     bool binary;
     double Newtons_constant;
     std::array<double, CH_SPACEDIM>

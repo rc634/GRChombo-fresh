@@ -58,11 +58,26 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
     double z = coords.z;
     double y = coords.y;
     double r = sqrt(x * x + y * y + z * z);
+    double safe_r = sqrt(x * x + y * y + z * z + 10e-20);
+
 
     // first star physical variables
-    double lapse = m_1d_sol.get_lapse_interp(r);
     double psi = m_1d_sol.get_psi_interp(r);
+    double dpsi = m_1d_sol.get_dpsi_interp(r);
+    double lapse = 1./psi;
+    // double At = m_1d_sol.get_At_interp(r);
     double At = m_1d_sol.get_At_interp(r);
+
+    // double Ex = -(At / lapse) * (x / safe_r)
+    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
+    // double Ey = -(At / lapse) * (y / safe_r)
+    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
+    // double Ez = -(At / lapse) * (z / safe_r)
+    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
+    double Er = At / psi / safe_r;
+    double Ex = Er * (x / safe_r);
+    double Ey = Er * (y / safe_r);
+    double Ez = Er * (z / safe_r);
 
 
     if (binary)
@@ -70,21 +85,43 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
         // boosts and coordinate objects
         x = (coords.x + separation / 2.);
         r = sqrt(x * x + y * y + z * z);
+        safe_r = sqrt(x * x + y * y + z * z + 10e-20);
 
-        // first star physical variables
-        lapse += m_1d_sol.get_lapse_interp(r)-1.;
-        psi += m_1d_sol.get_psi_interp(r)-1.;
-        At += m_1d_sol.get_At_interp(r);
+        // second star physical variables
+        double lapse2 = m_1d_sol.get_lapse_interp(r);
+        double psi2 = m_1d_sol.get_psi_interp(r);
+        double dpsi2 = m_1d_sol.get_dpsi_interp(r);
+        double dlapse2 = m_1d_sol.get_dlapse_interp(r);
+        double At2 = m_1d_sol.get_At_interp(r);
+        //safe_inv_lapse = lapse2 / (sqrt(lapse2*lapse2) + 10e-10);
+
+        double Ex2 = 0.;
+        double Ey2 = 0.;
+        double Ez2 = 0.;
+
+
+        At += At2;
+        Ex += Ex2;
+        Ey += Ey2;
+        Ez += Ez2;
+        psi = sqrt(psi * psi + psi2 * psi2);
+        lapse = sqrt(lapse * lapse + lapse2 * lapse2);
     }
 
 
-    vars.chi = pow(psi * psi, -1. / 3.);
+    vars.chi = pow(psi, -2);
 
     // can pick either lapse maybe
-    vars.lapse += sqrt(vars.chi);
-    //vars.lapse += lapse;
+    //vars.lapse += sqrt(vars.chi);
+    vars.lapse += lapse;
 
-    vars.At += At;
+    vars.At += 0.*At;
+
+    vars.Ex += Ex;
+
+    vars.Ey += Ey;
+
+    vars.Ez += Ez;
 
     double kroneka[3][3] = {{1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
 

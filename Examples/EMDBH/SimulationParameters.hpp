@@ -28,6 +28,7 @@ class SimulationParameters : public SimulationParametersBase
     void readParams(GRParmParse &pp)
     {
         // for regridding
+        pp.load("regrid_threshold_A", regrid_threshold_A);
         pp.load("regrid_threshold_phi", regrid_threshold_phi);
         pp.load("regrid_threshold_chi", regrid_threshold_chi);
 
@@ -40,7 +41,8 @@ class SimulationParameters : public SimulationParametersBase
                 {0.5 * L, 0.5 * L, 0.5 * L});
         pp.load("binary", emdbh_params.binary, false);
         pp.load("separation", emdbh_params.separation, 0.0);
-        pp.load("bh_charge", emdbh_params.bh_charge, 0.6);
+        pp.load("bh_charge", emdbh_params.bh_charge, 0.0);
+        pp.load("bh_mass", emdbh_params.bh_mass, 1.0);
         pp.load("G_Newton", emdbh_params.Newtons_constant, 1.0);
 
         // Coupling params
@@ -133,7 +135,7 @@ class SimulationParameters : public SimulationParametersBase
     }
 
     // Tagging thresholds
-    Real regrid_threshold_phi, regrid_threshold_chi;
+    Real regrid_threshold_phi, regrid_threshold_chi, regrid_threshold_A;
 
     // Initial data for matter and potential
     double G_Newton;

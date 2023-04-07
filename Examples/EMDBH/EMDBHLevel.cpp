@@ -19,7 +19,7 @@
 #include "NewMatterConstraints.hpp"
 
 // For tag cells
-#include "PhiAndChiExtractionTaggingCriterion.hpp"
+#include "EMDExtractionTaggingCriterion.hpp"
 
 // Problem specific includes
 #include "EMDBH.hpp"
@@ -150,7 +150,11 @@ void EMDBHLevel::prePlotLevel()
                 emd_field, m_dx, m_p.G_Newton, c_Ham,
                 Interval(c_Mom1, c_Mom3)),
 
-            EMDLorentzScalars(m_dx)),
+            EMDLorentzScalars(m_dx),
+
+            EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
+                emd_field, m_dx, c_rho,
+                Interval(c_s1, c_s3), Interval(c_s11, c_s33))),
 
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
@@ -200,7 +204,7 @@ void EMDBHLevel::specificEvalRHS(GRLevelData &a_soln, GRLevelData &a_rhs,
     MatterCCZ4RHS<EinsteinMaxwellDilatonFieldWithCoupling> my_ccz4_matter(
         emd_field, m_p.ccz4_params, m_dx, m_p.sigma, m_p.formulation,
         m_p.G_Newton);
-    SetValue set_analysis_vars_zero(0.0, Interval(c_Ez + 1, NUM_VARS - 1));
+    SetValue set_analysis_vars_zero(0.0, Interval(c_Xi + 1, NUM_VARS - 1));
     auto compute_pack =
         make_compute_pack(my_ccz4_matter, set_analysis_vars_zero);
     BoxLoops::loop(compute_pack, a_soln, a_rhs, EXCLUDE_GHOST_CELLS);
@@ -512,8 +516,9 @@ void EMDBHLevel::doAnalysis()
 void EMDBHLevel::computeTaggingCriterion(FArrayBox &tagging_criterion,
                                              const FArrayBox &current_state)
 {
-    BoxLoops::loop(PhiAndChiExtractionTaggingCriterion(
+    BoxLoops::loop(EMDExtractionTaggingCriterion(
                        m_dx, m_level, m_p.mass_extraction_params,
-                       m_p.regrid_threshold_phi, m_p.regrid_threshold_chi),
-                   current_state, tagging_criterion);
+                       m_p.regrid_threshold_A, m_p.regrid_threshold_phi,
+                       m_p.regrid_threshold_chi), current_state,
+                                                  tagging_criterion);
 }

@@ -83,7 +83,7 @@ class EMDLorentzScalars
         Bij[1][1] = 0.;
         Bij[1][2] = matter_d1.az[1] - matter_d1.ay[2];
         Bij[2][0] = -Bij[0][2];
-        Bij[1][2] = - Bij[2][1];
+        Bij[2][1] = - Bij[1][2];
         Bij[2][2] = 0.;
 
         FOR2(i, j)

@@ -17,7 +17,7 @@ void RNBHSolution::main()
     // create the Reissner Nordstrom solution
     double r=0;
     double eps_0 = 1. ; //permitivity of free space, natural units -> 1
-    Q = sqrt(4. * M_PI * eps_0 * Qratio);
+    Q = Qratio / sqrt(8. * M_PI); // note used
     for (int i=0; i<gridsize; i++)
     {
         r = i*dx;
@@ -25,7 +25,7 @@ void RNBHSolution::main()
         omega[i] = (4. * r * r - M * M + Qratio * Qratio)
                       /(4. * r * r + 4. * M * r + M * M - Qratio * Qratio);
         psi[i] = 1. + M / r + (M * M - Qratio * Qratio)/(4. * r * r);
-        At[i] = Q / (r * psi[i]) ;
+        At[i] =  -Qratio / (sqrt(8. * M_PI) * r ) ;
     }
 
 }
@@ -35,7 +35,7 @@ void RNBHSolution::main_polar_areal()
     // create the Reissner Nordstrom solution
     double r=0;
     double eps_0 = 1. ; //permitivity of free space, natural units -> 1
-    Q = sqrt(4. * M_PI * eps_0 * Qratio);
+    Q = Qratio / sqrt(8. * M_PI);
     for (int i=0; i<gridsize; i++)
     {
         r = i*dx;
@@ -43,6 +43,21 @@ void RNBHSolution::main_polar_areal()
         At[i] = Q / r;
         omega[i] = 1.  -  2. * G * M / r  +  G * Q * Q / (4. * M_PI * r * r );
         psi[i] = 1./omega[i];
+    }
+
+}
+
+void RNBHSolution::main_iso_sc()
+{
+    // create the Reissner Nordstrom solution
+    double r=0;
+    for (int i=0; i<gridsize; i++)
+    {
+        r = i*dx;
+        if (i==0) r = 10e-10;
+        At[i] = 0.;
+        omega[i] = (M - 2. * r ) / (M + 2. * r );
+        psi[i] = pow( 1. + M / (2. * r)  , 2 );
     }
 
 }
@@ -221,7 +236,8 @@ void RNBHSolution::set_initialcondition_params(
     L = max_r * 1.05; // just to make sure the function domain is slightly
                       // larger than the required cube
     dx = L / (gridsize - 1);
-    Qratio = m_params_EMDBH.bh_charge;
+    M = m_params_EMDBH.bh_mass;
+    Qratio = M*m_params_EMDBH.bh_charge;
 }
 
 #endif /* RNBHSOLUTION_IMPL_HPP_ */

@@ -8,7 +8,7 @@ class RNBHSolution
 
   private:
 
-    double G, L, dx, M=1., Qratio, Q; // Qratio = Q/Qextremal
+    double G, L, dx, M, Qratio, Q; // Qratio = Q/Qextremal
     int gridsize;
 
     std::vector<double> At;            // electric potential
@@ -29,6 +29,7 @@ class RNBHSolution
 
     void main();
     void main_polar_areal();
+    void main_iso_sc();
 };
 
 #include "RNBHSolution.impl.hpp"

@@ -43,6 +43,7 @@ template <class coupling_t = DefaultEMDCouplingFunction>
         data_t Ex;
         data_t Ey;
         data_t Ez;
+        data_t Xi;
     };
 
     //! Structure containing the rhs variables for the matter fields
@@ -57,6 +58,7 @@ template <class coupling_t = DefaultEMDCouplingFunction>
       data_t Ex;
       data_t Ey;
       data_t Ez;
+      data_t Xi;
 
         /// Defines the mapping between members of Vars and Chombo grid
         /// variables (enum in User_Variables)
@@ -72,6 +74,7 @@ template <class coupling_t = DefaultEMDCouplingFunction>
             VarsTools::define_enum_mapping(mapping_function, c_Ex, Ex);
             VarsTools::define_enum_mapping(mapping_function, c_Ey, Ey);
             VarsTools::define_enum_mapping(mapping_function, c_Ez, Ez);
+            VarsTools::define_enum_mapping(mapping_function, c_Xi, Xi);
         }
     };
 
@@ -159,6 +162,8 @@ template <class coupling_t = DefaultEMDCouplingFunction>
             &d2_az,
         const Tensor<1, data_t>
             &d1_At,
+        const Tensor<1, data_t>
+            &d1_Xi,
         const EMDObject<data_t>
             &advec_emd); //!< advection terms for the emd vars
 };

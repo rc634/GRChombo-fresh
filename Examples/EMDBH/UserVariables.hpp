@@ -25,6 +25,7 @@ enum
     c_Ex,                  // x electric field
     c_Ey,                  // y electric field
     c_Ez,                  // z electric field
+    c_Xi,                  // maxwell constriant
 
 
     // Note that it is important that the first enum value is set to 1 more than
@@ -37,7 +38,7 @@ namespace UserVariables
 static const std::array<std::string, NUM_VARS - NUM_CCZ4_VARS>
     matterfield_variable_names =
     {"phi", "Pi", "At",
-               "ax", "ay", "az", "Ex", "Ey", "Ez"};
+               "ax", "ay", "az", "Ex", "Ey", "Ez", "Xi"};
 
 static const std::array<std::string, NUM_VARS> variable_names =
     ArrayTools::concatenate(ccz4_variable_names, matterfield_variable_names);
