@@ -17,7 +17,7 @@ void RNBHSolution::main()
     // create the Reissner Nordstrom solution
     double r=0;
     double eps_0 = 1. ; //permitivity of free space, natural units -> 1
-    Q = Qratio / sqrt(8. * M_PI); // note used
+    Q = Qratio / sqrt(8. * M_PI); // not used
     for (int i=0; i<gridsize; i++)
     {
         r = i*dx;
@@ -25,7 +25,7 @@ void RNBHSolution::main()
         omega[i] = (4. * r * r - M * M + Qratio * Qratio)
                       /(4. * r * r + 4. * M * r + M * M - Qratio * Qratio);
         psi[i] = 1. + M / r + (M * M - Qratio * Qratio)/(4. * r * r);
-        At[i] =  -Qratio / (sqrt(8. * M_PI) * r ) ;
+        At[i] =  -Qratio / (sqrt(8. * M_PI) * r * r * psi[i]) ;
     }
 
 }

@@ -58,7 +58,8 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
     double z = coords.z;
     double y = coords.y;
     double r = sqrt(x * x + y * y + z * z);
-    double safe_r = sqrt(x * x + y * y + z * z + 10e-20);
+    double safe_r = r;
+    // double safe_r = sqrt(x * x + y * y + z * z + 10e-20);
 
 
     // first star physical variables
@@ -74,7 +75,7 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
     //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
     // double Ez = -(At / lapse) * (z / safe_r)
     //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
-    double Er = At / psi / safe_r;
+    double Er = At;
     double Ex = Er * (x / safe_r);
     double Ey = Er * (y / safe_r);
     double Ez = Er * (z / safe_r);
@@ -117,10 +118,12 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
 
     vars.At += 0.*At;
 
+    vars.ax = 0.;
+    vars.ay = 0.;
+    vars.az = 0.;
+
     vars.Ex += Ex;
-
     vars.Ey += Ey;
-
     vars.Ez += Ez;
 
     double kroneka[3][3] = {{1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
