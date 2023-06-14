@@ -62,10 +62,10 @@ emtensor_t<data_t> EinsteinMaxwellDilatonField<coupling_t>::compute_emtensor(
     Bij[0][0] = 0.;
     Bij[0][1] = d1.ay[0] - d1.ax[1];
     Bij[0][2] = d1.az[0] - d1.ax[2];
-    Bij[1][0] = -Bij[0][1];
+    Bij[1][0] = - Bij[0][1];
     Bij[1][1] = 0.;
     Bij[1][2] = d1.az[1] - d1.ay[2];
-    Bij[2][0] = -Bij[0][2];
+    Bij[2][0] = - Bij[0][2];
     Bij[2][1] = - Bij[1][2];
     Bij[2][2] = 0.;
 
@@ -90,17 +90,21 @@ emtensor_t<data_t> EinsteinMaxwellDilatonField<coupling_t>::compute_emtensor(
     // compute coupling and add constributions to EM Tensor
     my_coupling.compute_coupling(f_of_phi,f_prime_of_phi,coupling_of_phi,vars);
 
-    out.rho += coupling_of_phi * (BB / 2. + EE);
+    //out.rho += coupling_of_phi * (BB / 2. + EE);
+    out.rho += (BB / 2. + EE);
 
     FOR2(i, j)
     {
-        out.Sij[i][j] += coupling_of_phi * ( -2. * Ei[i] * Ei[j]
-                      -  vars.h[i][j] * (BB / 2. - EE) / vars.chi );
+        // out.Sij[i][j] += coupling_of_phi * ( -2. * Ei[i] * Ei[j]
+        //               -  vars.h[i][j] * (BB / 2. - EE) / vars.chi );
+        out.Sij[i][j] +=  -2. * Ei[i] * Ei[j]
+                      -  vars.h[i][j] * (BB / 2. - EE) / vars.chi ;
     }
     FOR4(i,j,k,l)
     {
-        out.Sij[i][j] += 2. * coupling_of_phi
-                        * Bij[i][k]*Bij[j][l]*h_UU[k][l]*vars.chi;
+        // out.Sij[i][j] += 2. * coupling_of_phi
+        //                 * Bij[i][k]*Bij[j][l]*h_UU[k][l]*vars.chi;
+        out.Sij[i][j] += 2. * Bij[i][k]*Bij[j][l]*h_UU[k][l]*vars.chi;
     }
 
     // S = Tr_S_ij
@@ -108,8 +112,9 @@ emtensor_t<data_t> EinsteinMaxwellDilatonField<coupling_t>::compute_emtensor(
 
     FOR3(i,j,k)
     {
-        out.Si[i] += 2. * coupling_of_phi
-                      * Ei[j] * Bij[i][k] * h_UU[k][j] * vars.chi;
+        // out.Si[i] += 2. * coupling_of_phi
+        //               * Ei[j] * Bij[i][k] * h_UU[k][j] * vars.chi;
+        out.Si[i] += 2. * Ei[j] * Bij[i][k] * h_UU[k][j] * vars.chi;
     }
 
     return out;
@@ -128,8 +133,11 @@ void EinsteinMaxwellDilatonField<coupling_t>::emtensor_excl_coupling(
 {
 
     // compute some useful quantities
-    data_t PiPi = vars_emd.Pi*vars_emd.Pi;
+    data_t PiPi = 0.;
     data_t DphiDphi = 0.;
+
+
+    PiPi = vars_emd.Pi*vars_emd.Pi;
 
     FOR2(i, j)
     {
@@ -141,21 +149,25 @@ void EinsteinMaxwellDilatonField<coupling_t>::emtensor_excl_coupling(
     // S_ij = T_ij
     FOR2(i, j)
     {
-        out.Sij[i][j] = 2. * d1_phi[i] * d1_phi[j]
-                      - vars.h[i][j] * (DphiDphi - PiPi) / vars.chi;
+        // out.Sij[i][j] = 2. * d1_phi[i] * d1_phi[j]
+        //               - vars.h[i][j] * (DphiDphi - PiPi) / vars.chi;
+        out.Sij[i][j] = 0.;
     }
 
     // S = Tr_S_ij
-    out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
+    // out.S = vars.chi * TensorAlgebra::compute_trace(out.Sij, h_UU);
+    out.S = 0.;
 
     // S_i (note lower index) = n^a T_a0
     FOR1(i)
     {
-        out.Si[i] = 2.*vars_emd.Pi * d1_phi[i];
+        // out.Si[i] = 2.*vars_emd.Pi * d1_phi[i];
+        out.Si[i] = 0.;
     }
 
     // rho = n^a n^b T_ab
-    out.rho = PiPi + DphiDphi;
+    // out.rho = PiPi + DphiDphi;
+    out.rho = 0.;
 }
 
 // Adds in the RHS for the matter vars
@@ -245,10 +257,10 @@ void EinsteinMaxwellDilatonField<coupling_t>::add_matter_rhs(
     Bij[0][0] = 0.;
     Bij[0][1] = d1.ay[0] - d1.ax[1];
     Bij[0][2] = d1.az[0] - d1.ax[2];
-    Bij[1][0] = -Bij[0][1];
+    Bij[1][0] = - Bij[0][1];
     Bij[1][1] = 0.;
     Bij[1][2] = d1.az[1] - d1.ay[2];
-    Bij[2][0] = -Bij[0][2];
+    Bij[2][0] = - Bij[0][2];
     Bij[2][1] = - Bij[1][2];
     Bij[2][2] = 0.;
 
@@ -280,6 +292,46 @@ void EinsteinMaxwellDilatonField<coupling_t>::add_matter_rhs(
     // compute coupling and add constributions to EOM
     my_coupling.compute_coupling(f_of_phi,f_prime_of_phi,coupling_of_phi,vars);
 
+    // // adjust RHS for the coupling term
+    // total_rhs.phi = rhs_emd.phi;
+    //
+    // total_rhs.Pi = rhs_emd.Pi - 0.5 * f_prime_of_phi * vars.lapse *
+    //                                       coupling_of_phi * (BB - 2. * EE);
+    //
+    // total_rhs.At = rhs_emd.At;
+    //
+    // total_rhs.ax = rhs_emd.ax;
+    //
+    // total_rhs.ay = rhs_emd.ay;
+    //
+    // total_rhs.az = rhs_emd.az;
+    //
+    // total_rhs.Ex = rhs_emd.Ex - 2. * f_prime_of_phi * vars.lapse
+    //                                * vars_emd.Ex * vars_emd.Pi;
+    //
+    // total_rhs.Ey = rhs_emd.Ey - 2. * f_prime_of_phi * vars.lapse
+    //                                * vars_emd.Ey * vars_emd.Pi;
+    //
+    // total_rhs.Ez = rhs_emd.Ez - 2. * f_prime_of_phi * vars.lapse
+    //                                * vars_emd.Ez * vars_emd.Pi;
+    //
+    // total_rhs.Xi = rhs_emd.Xi + vars.lapse * coupling_of_phi * divE;
+    //
+    // FOR2(j,k)
+    // {
+    //     total_rhs.Xi += - 2. * coupling_of_phi * f_prime_of_phi * vars.lapse
+    //                          * h_UU[k][j] * vars.chi * d1.phi[k] * Ei[j];
+    //
+    //     total_rhs.Ex += 2. * vars.lapse * f_prime_of_phi
+    //                        * vars.chi * h_UU[j][k] * Bij[k][0] * d1.phi[j];
+    //
+    //     total_rhs.Ey += 2. * vars.lapse * f_prime_of_phi
+    //                        * vars.chi * h_UU[j][k] * Bij[k][1] * d1.phi[j];
+    //
+    //     total_rhs.Ez += 2. * vars.lapse * f_prime_of_phi
+    //                        * vars.chi * h_UU[j][k] * Bij[k][2] * d1.phi[j];
+    // }
+
     // adjust RHS for the coupling term
     total_rhs.phi = rhs_emd.phi;
 
@@ -294,31 +346,13 @@ void EinsteinMaxwellDilatonField<coupling_t>::add_matter_rhs(
 
     total_rhs.az = rhs_emd.az;
 
-    total_rhs.Ex = rhs_emd.Ex - 2. * f_prime_of_phi * vars.lapse
-                                   * vars_emd.Ex * vars_emd.Pi;
+    total_rhs.Ex = rhs_emd.Ex;
 
-    total_rhs.Ey = rhs_emd.Ey - 2. * f_prime_of_phi * vars.lapse
-                                   * vars_emd.Ey * vars_emd.Pi;
+    total_rhs.Ey = rhs_emd.Ey;
 
-    total_rhs.Ez = rhs_emd.Ez - 2. * f_prime_of_phi * vars.lapse
-                                   * vars_emd.Ez * vars_emd.Pi;
+    total_rhs.Ez = rhs_emd.Ez;
 
-    total_rhs.Xi = rhs_emd.Xi + vars.lapse * coupling_of_phi * divE;
-
-    FOR2(j,k)
-    {
-        total_rhs.Xi += - 2. * coupling_of_phi * f_prime_of_phi * vars.lapse
-                             * h_UU[k][j] * vars.chi * d1.phi[k] * Ei[j];
-
-        total_rhs.Ex += 2. * vars.lapse * f_prime_of_phi
-                           * vars.chi * h_UU[j][k] * Bij[k][0] * d1.phi[j];
-
-        total_rhs.Ey += 2. * vars.lapse * f_prime_of_phi
-                           * vars.chi * h_UU[j][k] * Bij[k][1] * d1.phi[j];
-
-        total_rhs.Ez += 2. * vars.lapse * f_prime_of_phi
-                           * vars.chi * h_UU[j][k] * Bij[k][2] * d1.phi[j];
-    }
+    total_rhs.Xi = rhs_emd.Xi + vars.lapse * divE;
 
 }
 
@@ -351,8 +385,9 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
     Tensor<1, data_t, 3> a;
     Tensor<1, data_t, 3> Ei;
     Tensor<2, data_t, 3> Bij;
-    Tensor<2, data_t, 3> Da_ij; // D_i a_j // patial deriv
+    Tensor<2, data_t, 3> Da_ij; // D_i a_j // cov deriv
     Tensor<3, data_t, 3> DBijk; // D_i B_jk // cov deriv
+    Tensor<3, data_t, 3> Dijak; // D_ij a_k // partial deriv!
     data_t div_a = 0.; // divergence of a
     data_t laplace_phi = 0.;
 
@@ -364,7 +399,7 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
     Ei[1] = vars_emd.Ey;
     Ei[2] = vars_emd.Ez;
 
-    Da_ij[0][0] = d1_ax[0]; // D_i a_j // partial deriv only
+    Da_ij[0][0] = d1_ax[0]; // \partial_i a_j // partial deriv part
     Da_ij[1][0] = d1_ax[1];
     Da_ij[2][0] = d1_ax[2];
     Da_ij[0][1] = d1_ay[0];
@@ -380,8 +415,13 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
 
         DBijk[i][j][k] = 0.; // D_i B_jk
     }
+
     FOR2(i,j)
     {
+        Dijak[i][j][0] = d2_ax[i][j];
+        Dijak[i][j][1] = d2_ay[i][j];
+        Dijak[i][j][2] = d2_az[i][j];
+
         // spatial laplacian of phi
         laplace_phi += vars.chi * h_UU[i][j] * d2_phi[i][j];
         FOR1(k)
@@ -398,13 +438,11 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
         }
 
         Bij[i][j] = Da_ij[i][j] - Da_ij[j][i];
+    }
 
-        DBijk[i][j][0] += d2_ax[i][j];
-        DBijk[i][0][j] += -d2_ax[i][j];
-        DBijk[i][j][1] += d2_ay[i][j];
-        DBijk[i][1][j] += -d2_ay[i][j];
-        DBijk[i][j][2] += d2_az[i][j];
-        DBijk[i][2][j] += -d2_az[i][j];
+    FOR3(i,j,k)
+    {
+        DBijk[i][j][k] = Dijak[i][j][k] - Dijak[i][k][j];
     }
 
     FOR4(i,j,k,l)
@@ -413,6 +451,72 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
                           - chris_phys[l][i][j] * Bij[l][k];
     }
 
+    // Lie derivs with respect to the shift vector
+    data_t LieDeriv_ax = advec_emd.ax;
+    data_t LieDeriv_ay = advec_emd.ay;
+    data_t LieDeriv_az = advec_emd.az;
+    data_t LieDeriv_Ex = advec_emd.Ex;
+    data_t LieDeriv_Ey = advec_emd.Ey;
+    data_t LieDeriv_Ez = advec_emd.Ez;
+
+    // partial_j beta^i = d1.shift[i][j]
+    FOR1(i)
+    {
+        LieDeriv_ax += a[i] * d1.shift[i][0];
+        LieDeriv_ay += a[i] * d1.shift[i][1];
+        LieDeriv_az += a[i] * d1.shift[i][2];
+        LieDeriv_Ex += Ei[i] * d1.shift[i][0];
+        LieDeriv_Ey += Ei[i] * d1.shift[i][1];
+        LieDeriv_Ez += Ei[i] * d1.shift[i][2];
+    }
+
+
+    // rhs_emd.phi = advec_emd.phi - vars.lapse * vars_emd.Pi;
+    //
+    // rhs_emd.Pi = advec_emd.Pi + vars.lapse * vars.K * vars_emd.Pi
+    //                           - vars.lapse * laplace_phi;
+    //
+    // rhs_emd.At = advec_emd.At
+    //            + vars.lapse * (vars_emd.At * vars.K - div_a - vars_emd.Xi);
+    //
+    // rhs_emd.ax = LieDeriv_ax - vars_emd.At * d1.lapse[0]
+    //                  -vars.lapse * ( vars_emd.Ex + d1_At[0]);
+    //
+    // rhs_emd.ay = LieDeriv_ay - vars_emd.At * d1.lapse[1]
+    //                  -vars.lapse * ( vars_emd.Ey + d1_At[1]);
+    //
+    // rhs_emd.az = LieDeriv_az - vars_emd.At * d1.lapse[2]
+    //                  -vars.lapse * ( vars_emd.Ez + d1_At[2]);
+    //
+    // rhs_emd.Ex = LieDeriv_Ex + vars.lapse * vars_emd.Ex * vars.K
+    //                          + vars.lapse * d1_Xi[0];
+    //
+    // rhs_emd.Ey = LieDeriv_Ey + vars.lapse * vars_emd.Ey * vars.K
+    //                          + vars.lapse * d1_Xi[1];
+    //
+    // rhs_emd.Ez = LieDeriv_Ez + vars.lapse * vars_emd.Ez * vars.K
+    //                          + vars.lapse * d1_Xi[2];
+    //
+    // data_t kappa = 1.0 ; // maxwell damping param, should be positive
+    //
+    // rhs_emd.Xi = advec_emd.Xi - vars.lapse * kappa * vars_emd.Xi;
+    //
+    //
+    // FOR2(j,k)
+    // {
+    //     rhs_emd.Pi += - vars.chi * h_UU[k][j] * d1_phi[k] * d1.lapse[j];
+    //
+    //     rhs_emd.At += - a[k] * d1.lapse[j] * h_UU[k][j] * vars.chi;
+    //
+    //     rhs_emd.Ex += -vars.chi * h_UU[j][k]
+    //                 * ( Bij[k][0] * d1.lapse[j] + vars.lapse * DBijk[j][k][0] );
+    //
+    //     rhs_emd.Ey += -vars.chi * h_UU[j][k]
+    //                 * ( Bij[k][1] * d1.lapse[j] + vars.lapse * DBijk[j][k][1] );
+    //
+    //     rhs_emd.Ez += -vars.chi * h_UU[j][k]
+    //                 * ( Bij[k][2] * d1.lapse[j] + vars.lapse * DBijk[j][k][2] );
+    // }
 
     rhs_emd.phi = advec_emd.phi - vars.lapse * vars_emd.Pi;
 
@@ -422,25 +526,25 @@ void EinsteinMaxwellDilatonField<coupling_t>::matter_rhs_excl_coupling(
     rhs_emd.At = advec_emd.At
                + vars.lapse * (vars_emd.At * vars.K - div_a - vars_emd.Xi);
 
-    rhs_emd.ax = advec_emd.ax - vars_emd.At * d1.lapse[0]
+    rhs_emd.ax = LieDeriv_ax - vars_emd.At * d1.lapse[0]
                      -vars.lapse * ( vars_emd.Ex + d1_At[0]);
 
-    rhs_emd.ay = advec_emd.ay - vars_emd.At * d1.lapse[1]
+    rhs_emd.ay = LieDeriv_ay - vars_emd.At * d1.lapse[1]
                      -vars.lapse * ( vars_emd.Ey + d1_At[1]);
 
-    rhs_emd.az = advec_emd.az - vars_emd.At * d1.lapse[2]
+    rhs_emd.az = LieDeriv_az - vars_emd.At * d1.lapse[2]
                      -vars.lapse * ( vars_emd.Ez + d1_At[2]);
 
-    rhs_emd.Ex = advec_emd.Ex + vars.lapse * vars_emd.Ex * vars.K
-                              + vars.lapse * d1_Xi[0];
+    rhs_emd.Ex = LieDeriv_Ex + vars.lapse * vars_emd.Ex * vars.K
+                             + vars.lapse * d1_Xi[0];
 
-    rhs_emd.Ey = advec_emd.Ey + vars.lapse * vars_emd.Ey * vars.K
-                              + vars.lapse * d1_Xi[1];
+    rhs_emd.Ey = LieDeriv_Ey + vars.lapse * vars_emd.Ey * vars.K
+                             + vars.lapse * d1_Xi[1];
 
-    rhs_emd.Ez = advec_emd.Ez + vars.lapse * vars_emd.Ez * vars.K
-                              + vars.lapse * d1_Xi[2];
+    rhs_emd.Ez = LieDeriv_Ez + vars.lapse * vars_emd.Ez * vars.K
+                             + vars.lapse * d1_Xi[2];
 
-    data_t kappa = 1.0 ; // maxwell damping param, should be positive
+    data_t kappa = 1. ; // maxwell damping param, should be positive
 
     rhs_emd.Xi = advec_emd.Xi - vars.lapse * kappa * vars_emd.Xi;
 

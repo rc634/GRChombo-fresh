@@ -8,9 +8,10 @@ class RNBHSolution
 
   private:
 
-    double G, L, dx, M, Qratio, Q; // Qratio = Q/Qextremal
+    double G, L, dx, M, Q;
     int gridsize;
 
+    std::vector<double> Ftr;            // F_tr
     std::vector<double> At;            // electric potential
     std::vector<double> omega;          // lapse
     std::vector<double> psi;            // conformal factor
@@ -21,11 +22,13 @@ class RNBHSolution
     void set_initialcondition_params(EMDBH_params_t m_params_EMDBH,
                         CouplingFunction::params_t m_params_coupling_function,
                                                           const double max_r);
+    double get_Ftr_interp(const double r) const;
     double get_At_interp(const double r) const;
     double get_lapse_interp(const double r) const;
     double get_dlapse_interp(const double r) const;
     double get_psi_interp(const double r) const;
     double get_dpsi_interp(const double r) const;
+    double calc_Ftr(const double r) const;
 
     void main();
     void main_polar_areal();

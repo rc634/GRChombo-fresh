@@ -58,77 +58,83 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
     double z = coords.z;
     double y = coords.y;
     double r = sqrt(x * x + y * y + z * z);
-    double safe_r = r;
-    // double safe_r = sqrt(x * x + y * y + z * z + 10e-20);
+    //double safe_r = r;
+    double safe_r = sqrt(x * x + y * y + z * z + 10e-20);
 
 
     // first star physical variables
     double psi = m_1d_sol.get_psi_interp(r);
     double dpsi = m_1d_sol.get_dpsi_interp(r);
     double lapse = 1./psi;
-    // double At = m_1d_sol.get_At_interp(r);
-    double At = m_1d_sol.get_At_interp(r);
+    double Ftr = m_1d_sol.get_Ftr_interp(r);
 
-    // double Ex = -(At / lapse) * (x / safe_r)
-    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
-    // double Ey = -(At / lapse) * (y / safe_r)
-    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
-    // double Ez = -(At / lapse) * (z / safe_r)
-    //           * (1. / safe_r + dpsi / psi + dlapse * safe_inv_lapse);
-    double Er = At;
+    double Er = -Ftr * psi;
     double Ex = Er * (x / safe_r);
     double Ey = Er * (y / safe_r);
     double Ez = Er * (z / safe_r);
 
-
-    if (binary)
-    {
-        // boosts and coordinate objects
-        x = (coords.x + separation / 2.);
-        r = sqrt(x * x + y * y + z * z);
-        safe_r = sqrt(x * x + y * y + z * z + 10e-20);
-
-        // second star physical variables
-        double lapse2 = m_1d_sol.get_lapse_interp(r);
-        double psi2 = m_1d_sol.get_psi_interp(r);
-        double dpsi2 = m_1d_sol.get_dpsi_interp(r);
-        double dlapse2 = m_1d_sol.get_dlapse_interp(r);
-        double At2 = m_1d_sol.get_At_interp(r);
-        //safe_inv_lapse = lapse2 / (sqrt(lapse2*lapse2) + 10e-10);
-
-        double Ex2 = 0.;
-        double Ey2 = 0.;
-        double Ez2 = 0.;
+    //get_At_interp retrieves A_t, At variable here is actually -n dot A !!
+    double At = -m_1d_sol.get_At_interp(r)/lapse;
 
 
-        At += At2;
-        Ex += Ex2;
-        Ey += Ey2;
-        Ez += Ez2;
-        psi = sqrt(psi * psi + psi2 * psi2);
-        lapse = sqrt(lapse * lapse + lapse2 * lapse2);
-    }
+
+
+    // if (binary)
+    // {
+    //     // boosts and coordinate objects
+    //     x = (coords.x + separation / 2.);
+    //     r = sqrt(x * x + y * y + z * z);
+    //     safe_r = sqrt(x * x + y * y + z * z + 10e-20);
+    //
+    //     // second star physical variables
+    //     double lapse2 = m_1d_sol.get_lapse_interp(r);
+    //     double psi2 = m_1d_sol.get_psi_interp(r);
+    //     double dpsi2 = m_1d_sol.get_dpsi_interp(r);
+    //     double dlapse2 = m_1d_sol.get_dlapse_interp(r);
+    //     double Ftr2 = m_1d_sol.get_Ftr_interp(r);
+    //     //safe_inv_lapse = lapse2 / (sqrt(lapse2*lapse2) + 10e-10);
+    //
+    //     double Ex2 = 0.;
+    //     double Ey2 = 0.;
+    //     double Ez2 = 0.;
+    //
+    //
+    //     Ftr += Ftr2;
+    //     Ex += Ex2;
+    //     Ey += Ey2;
+    //     Ez += Ez2;
+    //     psi = sqrt(psi * psi + psi2 * psi2);
+    //     lapse = sqrt(lapse * lapse + lapse2 * lapse2);
+    // }
 
 
     vars.chi = pow(psi, -2);
 
-    // can pick either lapse maybe
-    //vars.lapse += sqrt(vars.chi);
-    vars.lapse += lapse;
+    vars.phi=0.;
+    vars.Pi=0.;
+    vars.Xi=0.;
 
-    vars.At += 0.*At;
+    vars.lapse = lapse;
+
+    FOR1(i) vars.shift[i] = 0.;
+
+    vars.At = At;
 
     vars.ax = 0.;
     vars.ay = 0.;
     vars.az = 0.;
 
-    vars.Ex += Ex;
-    vars.Ey += Ey;
-    vars.Ez += Ez;
+    vars.Ex = Ex;
+    vars.Ey = Ey;
+    vars.Ez = Ez;
 
     double kroneka[3][3] = {{1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
 
     FOR2(i, j) vars.h[i][j] = kroneka[i][j];
+
+    vars.K = 0.;
+
+    FOR2(i, j) vars.A[i][j] = 0.;
 
     // Store the initial values of the variables
     current_cell.store_vars(vars);
