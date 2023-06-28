@@ -58,25 +58,17 @@ class EMDLorentzScalars
         // calculate A_\mu A^\mu = -At^2 + a_i a^i
         // (At = A^\mu n_\mu = -\alpha A^t)
         ////////////////////////////////////////////
-        data_t AA = -matter_vars.At*matter_vars.At;
+        data_t H2norm_damping = matter_vars.At * matter_vars.At
+                              + matter_vars.Xi * matter_vars.Xi;
 
-        Tensor<1, data_t, 3> a;
-
-        a[0] = matter_vars.ax;
-        a[1] = matter_vars.ay;
-        a[2] = matter_vars.az;
-
-        FOR2(i,j)
-        {
-            AA += a[i] * a[j] * h_UU[i][j] * adm_vars.chi;
-        }
 
         ////////////////////////////////////////////
-        // calculate F_{\mu\nu} F^{\mu\nu} = B_{ij}B^{ij} - 2 E_i E^i
+        // calculate F_{\mu\nu} F^{\mu\nu} = 2 B_i B^i - 2 E_i E^i
         ////////////////////////////////////////////
+
         data_t FF = 0.;
         Tensor<1, data_t, 3> Ei;
-        Tensor<2, data_t, 3> Bij;
+        Tensor<1, data_t, 3> Bi;
         data_t BB = 0.; // squared variables
         data_t EE = 0.; // squared variables
 
@@ -84,34 +76,24 @@ class EMDLorentzScalars
         Ei[1] = matter_vars.Ey;
         Ei[2] = matter_vars.Ez;
 
-        Bij[0][0] = 0.;
-        Bij[0][1] = matter_d1.ay[0] - matter_d1.ax[1];
-        Bij[0][2] = matter_d1.az[0] - matter_d1.ax[2];
-        Bij[1][0] = -Bij[0][1];
-        Bij[1][1] = 0.;
-        Bij[1][2] = matter_d1.az[1] - matter_d1.ay[2];
-        Bij[2][0] = -Bij[0][2];
-        Bij[2][1] = -Bij[1][2];
-        Bij[2][2] = 0.;
+        Bi[0] = matter_vars.ax;
+        Bi[1] = matter_vars.ay;
+        Bi[2] = matter_vars.az;
+
 
         FOR2(i, j)
         {
             EE += Ei[i] * Ei[j] * h_UU[i][j] * adm_vars.chi;
+            BB += Bi[i] * Bi[j] * h_UU[i][j] * adm_vars.chi;
         }
 
-        FOR4(i,j,k,l)
-        {
-            BB += Bij[i][j] * Bij[k][l]
-                * h_UU[i][k] * h_UU[j][l]
-                * adm_vars.chi * adm_vars.chi;
-        }
-
-        FF = BB - 2. * EE;
+        FF = 2. * BB - 2. * EE;
 
 
         ////////////////////////////////////////////
         // calculate hamiltonian of scalar field
         ////////////////////////////////////////////
+
         data_t phi_hamiltonian = matter_vars.Pi * matter_vars.Pi;
 
         FOR1(i)
@@ -136,51 +118,54 @@ class EMDLorentzScalars
         // maxwell constriants
         ////////////////////////////////////////////
 
-        auto epsilon = TensorAlgebra::epsilon();
-        Tensor<3, data_t, 3> Dijak;
-        Tensor<2, data_t, 3> Diaj;
+        data_t H2norm_maxwell_constraints = 0.;
+        Tensor<2, data_t, 3> DiBj;
         Tensor<2, data_t, 3> DiEj;
         data_t magnetic_constraint=0.;
         data_t electric_constraint=0.;
 
         FOR1(i)
         {
-            Diaj[i][0] = matter_d1.ax[i];
-            Diaj[i][1] = matter_d1.ay[i];
-            Diaj[i][2] = matter_d1.az[i];
+            DiBj[i][0] = matter_d1.ax[i];
+            DiBj[i][1] = matter_d1.ay[i];
+            DiBj[i][2] = matter_d1.az[i];
 
             DiEj[i][0] = matter_d1.Ex[i];
             DiEj[i][1] = matter_d1.Ey[i];
             DiEj[i][2] = matter_d1.Ez[i];
         }
+
+        // partial derivs
         FOR2(i,j)
         {
-            Dijak[i][j][0] = matter_d2.ax[i][j];
-            Dijak[i][j][1] = matter_d2.ay[i][j];
-            Dijak[i][j][2] = matter_d2.az[i][j];
-
             electric_constraint += DiEj[i][j] * h_UU[i][j] * adm_vars.chi;
+            magnetic_constraint += DiBj[i][j] * h_UU[i][j] * adm_vars.chi;
         }
 
-        FOR4(i,j,k,l)
-        {
-            Dijak[i][j][k] += - chris_phys[l][i][j] * Diaj[l][k]
-                              - chris_phys[l][i][k] * Diaj[j][l];
-        }
-
+        // covariant corrections
         FOR3(i,j,k)
         {
-            magnetic_constraint += epsilon[i][j][k]*Dijak[i][j][k];
+            magnetic_constraint += - chris_phys[k][i][j] * Bi[k]
+                                     * h_UU[i][j] * adm_vars.chi;
             electric_constraint += - chris_phys[k][i][j] * Ei[k]
                                      * h_UU[i][j] * adm_vars.chi;
         }
-        current_cell.store_vars(electric_constraint, c_phi_ham);
+
+        H2norm_maxwell_constraints = electric_constraint * electric_constraint
+                                   + magnetic_constraint * magnetic_constraint;
+
+
+
+        ////////////////////////////////////////////
+        // maxwell constriants
+        ////////////////////////////////////////////
 
 
         // store variables
         //current_cell.store_vars(phi_hamiltonian, c_phi_ham);
+        current_cell.store_vars(sqrt(H2norm_damping), c_phi_ham);
         current_cell.store_vars(FF, c_mod_F);
-        current_cell.store_vars(AA, c_mod_A);
+        current_cell.store_vars(sqrt(H2norm_maxwell_constraints), c_mod_A);
     }
 };
 

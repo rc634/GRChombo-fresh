@@ -110,15 +110,14 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
 
     vars.chi = pow(psi, -2);
 
-    vars.phi=0.;
-    vars.Pi=0.;
-    vars.Xi=0.;
+    vars.phi = 0.; // exp( -(pow(x-6.,2) + pow(y,2) + pow(z-6.,2)) / 4. );
+    vars.Pi = 0.;
+    vars.Xi = 0.;
+    vars.At = 0.;
 
     vars.lapse = lapse;
 
     FOR1(i) vars.shift[i] = 0.;
-
-    vars.At = At;
 
     vars.ax = 0.;
     vars.ay = 0.;

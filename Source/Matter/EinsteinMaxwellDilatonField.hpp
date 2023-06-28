@@ -83,9 +83,6 @@ template <class coupling_t = DefaultEMDCouplingFunction>
     template <class data_t> struct Diff2Vars
     {
         data_t phi;
-        data_t ax;
-        data_t ay;
-        data_t az;
 
         /// Defines the mapping between members of Vars and Chombo grid
         ///  variables (enum in User_Variables)
@@ -93,9 +90,6 @@ template <class coupling_t = DefaultEMDCouplingFunction>
         void enum_mapping(mapping_function_t mapping_function)
         {
             VarsTools::define_enum_mapping(mapping_function, c_phi, phi);
-            VarsTools::define_enum_mapping(mapping_function, c_ax, ax);
-            VarsTools::define_enum_mapping(mapping_function, c_ay, ay);
-            VarsTools::define_enum_mapping(mapping_function, c_az, az);
         }
     };
 
@@ -154,12 +148,12 @@ template <class coupling_t = DefaultEMDCouplingFunction>
             &d1_az,
         const Tensor<2, data_t>
             &d2_phi, //!< the value of the 2nd derivs of phi
-        const Tensor<2, data_t>
-            &d2_ax,
-        const Tensor<2, data_t>
-            &d2_ay,
-        const Tensor<2, data_t>
-            &d2_az,
+        const Tensor<1, data_t>
+            &d1_Ex,
+        const Tensor<1, data_t>
+            &d1_Ey,
+        const Tensor<1, data_t>
+            &d1_Ez,
         const Tensor<1, data_t>
             &d1_At,
         const Tensor<1, data_t>

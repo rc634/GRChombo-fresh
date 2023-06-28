@@ -10,7 +10,7 @@
 
 // coupilng function of lagangean, defined by
 // ~e^{-2 alpha f(phi)} F^2
-// with f = f0 + f1 * phi + f2 * phi
+// with f = f0 + f1 * phi + f2 * phi * phi
 
 
 class CouplingFunction
@@ -39,7 +39,7 @@ class CouplingFunction
                            const vars_t<data_t> &vars) const
     {
         // calculate f(phi) and then teh exponential coupling
-        f_of_phi = m_params.f0 + m_params.f1 * vars.phi 
+        f_of_phi = m_params.f0 + m_params.f1 * vars.phi
                                + m_params.f2 * vars.phi * vars.phi;
         f_prime_of_phi = m_params.f1 + 2. * m_params.f2 * vars.phi;
 
