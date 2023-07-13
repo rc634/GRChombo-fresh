@@ -12,7 +12,7 @@
 #include "EMDCouplingFunction.hpp"
 #include "EinsteinMaxwellDilatonField.hpp"
 // includes startracking
-#include "STAMR.hpp"
+#include "BHAMR.hpp"
 
 //!  A class for the evolution of a single emdbh.
 /*!
@@ -25,7 +25,7 @@ class EMDBHLevel : public GRAMRLevel
     // Inherit the contructors from GRAMRLevel
     using GRAMRLevel::GRAMRLevel;
 
-    STAMR &m_st_amr = dynamic_cast<STAMR &>(m_gr_amr);
+    BHAMR &m_bh_amr = dynamic_cast<BHAMR &>(m_gr_amr);
 
     // Typedef for scalar field
     typedef EinsteinMaxwellDilatonField<CouplingFunction> EinsteinMaxwellDilatonFieldWithCoupling;

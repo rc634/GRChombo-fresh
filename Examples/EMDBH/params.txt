@@ -97,7 +97,7 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
 checkpoint_interval = 50
 plot_interval = 2
 dt_multiplier = 0.25
-stop_time = 40.
+stop_time = 60.
 
 #Lapse evolution
 lapse_power = 1.0
@@ -161,6 +161,19 @@ emd_f0 = 0.0
 emd_f1 = 0.0
 emd_f2 = 0.0
 
+# AH FINDER params
+AH_activate = 1
+AH_verbose = 1
+AH_set_origins_to_punctures 1
+AH_num_ranks 0
+horizon_centre_1 = 0.0 0.0 0.0
+AH_num_points_u = 25
+AH_num_points_v = 18
+AH_coords_subpath = "ah_data/coords"
+AH_stats_prefix = "stats_AH"
+AH_coords_prefix = "coords_AH"
+
+
 # Extraction params
 activate_extraction = true
 
@@ -175,7 +188,7 @@ num_points_theta_mass = 24
 
 # GW extraction params
 #default center to grid center, uncomment to change
-extraction_center = 0 0 0 
+extraction_center = 0 0 0
 activate_gw_extraction = 1
 num_extraction_radii = 2
 extraction_radii = 2. 3. # can use extraction_radius for one radius

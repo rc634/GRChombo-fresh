@@ -51,6 +51,13 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("emd_f1", coupling_function_params.f1, 0.0);
         pp.load("emd_f2", coupling_function_params.f2, 0.0);
 
+        // Apparent Horizon stuff
+        #ifdef USE_AHFINDER
+        pp.load("AH_initial_guess", AH_initial_guess, emdbh_params.bh_mass*0.5);
+        #endif
+        pp.load("horizon_centre_1", horizon_centre_1,
+                {0.5 * L, 0.5 * L, 0.5 * L});
+
         // Mass extraction
         pp.load("activate_mass_extraction", activate_mass_extraction, 0);
         pp.load("num_mass_extraction_radii",
@@ -173,6 +180,11 @@ class SimulationParameters : public SimulationParametersBase
     double star_track_width;
     int star_track_level;
     int flux_extraction_level;
+
+    #ifdef USE_AHFINDER
+    double AH_initial_guess;
+    std::array<double, CH_SPACEDIM> horizon_centre_1;
+    #endif
 };
 
 #endif /* SIMULATIONPARAMETERS_HPP_ */

@@ -132,12 +132,12 @@ class ChomboParameters
     {
         // In this function, cannot use default value - it may print a 'default
         // message' to pout and a 'setPoutBaseName' must happen before
+
         restart_from_checkpoint = pp.contains("restart_file");
 #ifdef CH_USE_HDF5
         if (restart_from_checkpoint)
-        {
             pp.load("restart_file", restart_file);
-        }
+
         pp.load("chk_prefix", checkpoint_prefix);
         pp.load("plot_prefix", plot_prefix);
 #endif
@@ -155,6 +155,12 @@ class ChomboParameters
             pp.load("output_path", output_path);
         else
             output_path = default_path;
+
+        // user sets the 'subpath', we prepend 'output_path'
+        if (pp.contains("data_subpath"))
+            pp.load("data_subpath", data_path);
+        else
+            data_path = default_path;
 
 #ifdef CH_MPI
         // user sets the 'subpath', we prepend 'output_path'
@@ -175,6 +181,8 @@ class ChomboParameters
         // add backslash to paths
         if (!output_path.empty() && output_path.back() != '/')
             output_path += "/";
+        if (!data_path.empty() && data_path.back() != '/')
+            data_path += "/";
 #ifdef CH_MPI
         if (!pout_path.empty() && pout_path.back() != '/')
             pout_path += "/";
@@ -186,6 +194,7 @@ class ChomboParameters
 
         if (output_path != "./" && !output_path.empty())
         {
+            data_path = output_path + data_path;
 #ifdef CH_MPI
             pout_path = output_path + pout_path;
 #endif
@@ -485,25 +494,23 @@ class ChomboParameters
     Vector<int> regrid_interval; // steps between regrid at each level
     int max_steps;
     bool restart_from_checkpoint; // whether or not to restart or start afresh
-#ifdef CH_USE_HDF5
-    std::string restart_file;             // The path to the restart_file
-    bool ignore_checkpoint_name_mismatch; // ignore mismatch of variable names
-                                          // between restart file and program
-#endif
     double dt_multiplier, stop_time;        // The Courant factor and stop time
     int checkpoint_interval, plot_interval; // Steps between outputs
     int max_grid_size, block_factor;        // max and min box sizes
     double fill_ratio; // determines how fussy the regridding is about tags
-#ifdef CH_USE_HDF5
-    std::string checkpoint_prefix, plot_prefix; // naming of files
-#endif
     std::string output_path; // base path to use for all files
+    std::string data_path;   // directory to store data (extraction files,
+                             // puncture data, constraint norms, AHFinder)
 #ifdef CH_MPI
     std::string pout_prefix; // pout file prefix
     std::string pout_path;   // base path for pout files
 #endif
 #ifdef CH_USE_HDF5
-    std::string hdf5_path; // base path for pout files
+    std::string hdf5_path;                // base path for pout files
+    std::string restart_file;             // The path to the restart_file
+    bool ignore_checkpoint_name_mismatch; // ignore mismatch of variable names
+                                          // between restart file and program
+    std::string checkpoint_prefix, plot_prefix; // naming of files
     bool write_plot_ghosts;
     int num_plot_vars;
     std::vector<std::pair<int, VariableType>>

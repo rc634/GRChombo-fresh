@@ -223,6 +223,17 @@ void EMDBHLevel::doAnalysis()
 {
     CH_TIME("EMDBHLevel::specificPostTimeStep");
     bool first_step = (m_time == 0.0);
+
+
+    #ifdef USE_AHFINDER
+    if (m_p.AH_activate && m_level == m_p.AH_params.level_to_run)
+    {
+        CH_TIME("EMDBHLevel::doAnalysis::AH_FINDER");
+        m_bh_amr.m_ah_finder.solve(m_dt, m_time, m_restart_time);
+    }
+    #endif
+
+
     if (m_p.activate_weyl_extraction == 1 &&
         at_level_timestep_multiple(
             m_p.extraction_params.min_extraction_level()))
@@ -249,10 +260,10 @@ void EMDBHLevel::doAnalysis()
             }
 
             // Refresh the interpolator and do the interpolation
-            m_st_amr.m_interpolator->refresh();
+            m_bh_amr.m_interpolator->refresh();
             WeylExtraction gw_extraction(m_p.extraction_params, m_dt, m_time,
                                          first_step, m_restart_time);
-            gw_extraction.execute_query(m_st_amr.m_interpolator);
+            gw_extraction.execute_query(m_bh_amr.m_interpolator);
         }
     }
 
@@ -264,7 +275,7 @@ void EMDBHLevel::doAnalysis()
     }
     if (m_level == 0)
     {
-        AMRReductions<VariableType::diagnostic> amr_reductions(m_st_amr);
+        AMRReductions<VariableType::diagnostic> amr_reductions(m_bh_amr);
 
         // EMD scalars should be calculated pre-check and pre plot
         // so automatically here
@@ -429,7 +440,7 @@ void EMDBHLevel::doAnalysis()
     //             }
     //             // old code passed this coarse dx, maybe this doesnt work now?
     //             AMRReductions<VariableType::diagnostic> amr_reductions(
-    //                 m_st_amr);
+    //                 m_bh_amr);
     //             S_phi_integral = amr_reductions.sum(c_Sphi_source);
     //             S_phi_integrals[i] = S_phi_integral;
     //             Q_phi_integral = amr_reductions.sum(c_Qphi_density);
@@ -489,28 +500,31 @@ void EMDBHLevel::doAnalysis()
     //         density_file.write_time_data_line(Q_phi_integrals);
     //
     //         // Refresh the interpolator and do the interpolation
-    //         m_st_amr.m_interpolator->refresh();
+    //         m_bh_amr.m_interpolator->refresh();
     //         // setup and do angmomflux integral
     //         AngMomFlux ang_mom_flux(m_p.angmomflux_params, m_time, m_dt,
     //                                 m_restart_time, first_step);
-    //         ang_mom_flux.run(m_st_amr.m_interpolator);
+    //         ang_mom_flux.run(m_bh_amr.m_interpolator);
     //     }
     // }
 
-    if (m_p.do_star_track && m_level == m_p.star_track_level)
-    {
-        // if at restart time read data from dat file,
-        // will default to param file if restart time is 0
-        if (fabs(m_time - m_restart_time) < m_dt * 1.1)
-        {
-            m_st_amr.m_star_tracker.read_old_centre_from_dat(
-                "StarCentres", m_dt, m_time, m_restart_time, first_step);
-        }
 
-        m_st_amr.m_star_tracker.update_star_centres(c_mod_F);
-        m_st_amr.m_star_tracker.write_to_dat("StarCentres", m_dt, m_time,
-                                             m_restart_time, first_step);
-    }
+    // star tracker not yet compatible with Ah finder,
+    // would need to combine st_amr into bh_amr
+    // if (m_p.do_star_track && m_level == m_p.star_track_level)
+    // {
+    //     // if at restart time read data from dat file,
+    //     // will default to param file if restart time is 0
+    //     if (fabs(m_time - m_restart_time) < m_dt * 1.1)
+    //     {
+    //         m_st_amr.m_star_tracker.read_old_centre_from_dat(
+    //             "StarCentres", m_dt, m_time, m_restart_time, first_step);
+    //     }
+    //
+    //     m_st_amr.m_star_tracker.update_star_centres(c_mod_F);
+    //     m_st_amr.m_star_tracker.write_to_dat("StarCentres", m_dt, m_time,
+    //                                          m_restart_time, first_step);
+    // }
 }
 
 void EMDBHLevel::computeTaggingCriterion(FArrayBox &tagging_criterion,
