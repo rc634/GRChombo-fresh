@@ -73,39 +73,31 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
     double Ey = Er * (y / safe_r);
     double Ez = Er * (z / safe_r);
 
-    //get_At_interp retrieves A_t, At variable here is actually -n dot A !!
-    double At = -m_1d_sol.get_At_interp(r)/lapse;
+    if (binary)
+    {
+        // boosts and coordinate objects
+        x = (coords.x + separation / 2.);
+        r = sqrt(x * x + y * y + z * z);
+        safe_r = sqrt(x * x + y * y + z * z + 10e-20);
+
+        // second star physical variables
+        double psi2 = m_1d_sol.get_psi_interp(r);
+        double dpsi2 = m_1d_sol.get_dpsi_interp(r);
+        double Ftr2 = m_1d_sol.get_Ftr_interp(r);
+
+        double Er2 = -Ftr2 * psi2;
+        double Ex2 = Er2 * (x / safe_r);
+        double Ey2 = Er2 * (y / safe_r);
+        double Ez2 = Er2 * (z / safe_r);
 
 
-
-
-    // if (binary)
-    // {
-    //     // boosts and coordinate objects
-    //     x = (coords.x + separation / 2.);
-    //     r = sqrt(x * x + y * y + z * z);
-    //     safe_r = sqrt(x * x + y * y + z * z + 10e-20);
-    //
-    //     // second star physical variables
-    //     double lapse2 = m_1d_sol.get_lapse_interp(r);
-    //     double psi2 = m_1d_sol.get_psi_interp(r);
-    //     double dpsi2 = m_1d_sol.get_dpsi_interp(r);
-    //     double dlapse2 = m_1d_sol.get_dlapse_interp(r);
-    //     double Ftr2 = m_1d_sol.get_Ftr_interp(r);
-    //     //safe_inv_lapse = lapse2 / (sqrt(lapse2*lapse2) + 10e-10);
-    //
-    //     double Ex2 = 0.;
-    //     double Ey2 = 0.;
-    //     double Ez2 = 0.;
-    //
-    //
-    //     Ftr += Ftr2;
-    //     Ex += Ex2;
-    //     Ey += Ey2;
-    //     Ez += Ez2;
-    //     psi = sqrt(psi * psi + psi2 * psi2);
-    //     lapse = sqrt(lapse * lapse + lapse2 * lapse2);
-    // }
+        Ftr += Ftr2;
+        Ex += Ex2;
+        Ey += Ey2;
+        Ez += Ez2;
+        psi = sqrt(psi * psi + psi2 * psi2 - 1.);
+        lapse = 1./psi;
+    }
 
 
     vars.chi = pow(psi, -2);
@@ -119,6 +111,7 @@ template <class data_t> void EMDBH::compute(Cell<data_t> current_cell) const
 
     FOR1(i) vars.shift[i] = 0.;
 
+    // actually magnetic field B_i
     vars.ax = 0.;
     vars.ay = 0.;
     vars.az = 0.;
