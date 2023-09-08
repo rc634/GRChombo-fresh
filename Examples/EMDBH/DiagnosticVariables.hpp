@@ -22,6 +22,9 @@ enum
     c_Weyl4_Re,
     c_Weyl4_Im,
 
+    c_Pheyl2_Re,
+    c_Pheyl2_Im,
+
     c_rho, // stress tensor components
     c_s1,
     c_s2,
@@ -51,6 +54,9 @@ static const std::array<std::string, NUM_DIAGNOSTIC_VARS> variable_names = {
 
     "Weyl4_Re",
     "Weyl4_Im",
+
+    "Pheyl2_Re",
+    "Pheyl2_Im",
 
     "rho",
     "s1",

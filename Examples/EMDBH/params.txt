@@ -3,7 +3,7 @@
 verbosity = 0
 chk_prefix = chk/Sim_
 plot_prefix = plt/Sim_p_
-restart_file = chk/Sim_000950.3d.hdf5
+#restart_file = chk/Sim_000950.3d.hdf5
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
@@ -67,6 +67,7 @@ vars_parity_diagnostic = 0                #mod FF
                          0                #phi hamiltonian
                          0 1 2 3          #H,mom constraints
                          0 7              #Weyl4 re im
+                         3 4              #Pheyl2 re im
                          0 1 2 3          #Stresstensor rho s1 s2 s3
                          0 4 6 0 5 0      #Stresstensor s11 s12 s13 s22 s23 s33
 
@@ -86,6 +87,7 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
                          0.0                         #phi hamiltonian
                          0.0 0.0 0.0 0.0             #Ham and Mom
                          0.0 0.0                     #Wely4_Re and Weyl4_Im
+                         0.0 0.0                     #Pheyl2_Re and Pheyl2_Im
                          0.0 0.0 0.0 0.0             #Stress tensor rho s1 s2 s3
                          0.0 0.0 0.0 0.0 0.0 0.0     #Stress tensor s11 s12 s13 s22 s23 s33
 
@@ -130,8 +132,8 @@ calculate_constraint_violations = 1
 calculate_noether_charge = 1
 
 # Vars to write to plot files
-num_plot_vars = 13
-plot_vars = chi K lapse phi Pi Weyl4_Re rho ax ay Ex Ey mod_F Ham
+num_plot_vars = 15
+plot_vars = chi K lapse phi Pi Weyl4_Re Pheyl2_Re Pheyl2_Im rho ax ay Ex Ey mod_F Ham
 
 # Vars to output infinity norm for at end of coarse time steps
 num_vars_inf_norm = 3
@@ -203,6 +205,14 @@ modes = 2 0
         4 0
         5 0
         6 0
+
+## check for duplicate params between pheyl and weyl
+
+# EM extraction params
+
+activate_em_extraction = 1
+
+
 
 flux_do = false
 flux_number_of_radii = 2

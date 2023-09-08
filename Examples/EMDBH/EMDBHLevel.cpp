@@ -32,6 +32,9 @@
 #include "MatterWeyl4.hpp"
 #include "WeylExtraction.hpp"
 
+// FOR EM extraction_level
+#include "Pheyl2.hpp"
+
 // For Noether Charge calculation
 #include "EMDLorentzScalars.hpp"
 #include "SmallDataIO.hpp"
@@ -101,17 +104,25 @@ void EMDBHLevel::preCheckpointLevel()
     CouplingFunction coupling_function(m_p.coupling_function_params);
     EinsteinMaxwellDilatonFieldWithCoupling emd_field(coupling_function);
     BoxLoops::loop(
-        make_compute_pack(MatterWeyl4<EinsteinMaxwellDilatonFieldWithCoupling>(
+        make_compute_pack(
+
+              MatterWeyl4<EinsteinMaxwellDilatonFieldWithCoupling>(
                               emd_field,
                               m_p.extraction_params.extraction_center, m_dx,
                               m_p.formulation, m_p.G_Newton),
-                          MatterConstraints<EinsteinMaxwellDilatonFieldWithCoupling>(
+
+              MatterConstraints<EinsteinMaxwellDilatonFieldWithCoupling>(
                               emd_field, m_dx, m_p.G_Newton, c_Ham,
                               Interval(c_Mom1, c_Mom3)),
-                          EMDLorentzScalars(m_dx),
-                          EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
+
+              EMDLorentzScalars(m_dx),
+
+              EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                               emd_field, m_dx, c_rho,
-                              Interval(c_s1, c_s3), Interval(c_s11, c_s33))),
+                              Interval(c_s1, c_s3), Interval(c_s11, c_s33)),
+
+              Pheyl2(m_p.extraction_params.extraction_center, m_dx)),
+
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
 
@@ -154,7 +165,9 @@ void EMDBHLevel::prePlotLevel()
 
             EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                 emd_field, m_dx, c_rho,
-                Interval(c_s1, c_s3), Interval(c_s11, c_s33))),
+                Interval(c_s1, c_s3), Interval(c_s11, c_s33)),
+
+            Pheyl2(m_p.extraction_params.extraction_center, m_dx)),
 
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
@@ -265,6 +278,11 @@ void EMDBHLevel::doAnalysis()
                                          first_step, m_restart_time);
             gw_extraction.execute_query(m_bh_amr.m_interpolator);
         }
+    }
+
+    // Do Electromagnetic
+    if (m_p.activate_em_extraction == 1)
+    {
     }
 
     // noether charge, max mod phi, min chi, constraint violations
