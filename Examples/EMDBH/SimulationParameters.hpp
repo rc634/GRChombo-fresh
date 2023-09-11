@@ -80,7 +80,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("activate_gw_extraction", activate_weyl_extraction, 0);
 
         // Em extraction stuff
-        pp.load("activate_em_extraction", activate_em_extraction, 0);
+        pp.load("activate_em_extraction", activate_pheyl_extraction, 0);
 
         // Star Tracking
         /*pp.load("do_star_tracking", gaussfit_params.do_star_tracking, 0);
@@ -158,7 +158,7 @@ class SimulationParameters : public SimulationParametersBase
     extraction_params_t mass_extraction_params;
 
     int activate_weyl_extraction;
-    int activate_em_extraction;
+    int activate_pheyl_extraction;
 
     // Do we want to write a file with the L2 norms of contraints?
     bool calculate_constraint_violations;

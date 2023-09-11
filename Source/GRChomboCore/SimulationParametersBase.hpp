@@ -168,6 +168,108 @@ class SimulationParametersBase : public ChomboParameters
                     std::string("Weyl4_mode_"));
         }
 
+        ////////////
+        // PHEYL2 PARAMS
+        ////////////
+
+        pp.load("activate_em_extraction", activate_em_extraction, false);
+
+        if (activate_em_extraction)
+        {
+            pp.load("em_num_extraction_radii",
+                    pheyl2_extraction_params.num_extraction_radii, 1);
+
+            // Check for multiple extraction radii, otherwise load single
+            // radius/level (for backwards compatibility).
+            if (pp.contains("em_extraction_levels"))
+            {
+                pp.load("em_extraction_levels",
+                        pheyl2_extraction_params.extraction_levels,
+                        pheyl2_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("em_extraction_level", pheyl2_extraction_params.extraction_levels,
+                        1, 0);
+            }
+            if (pp.contains("em_extraction_radii"))
+            {
+                pp.load("em_extraction_radii", pheyl2_extraction_params.extraction_radii,
+                        pheyl2_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("em_extraction_radius", pheyl2_extraction_params.extraction_radii,
+                        1, 0.1);
+            }
+
+            pp.load("em_num_points_phi", pheyl2_extraction_params.num_points_phi, 2);
+            pp.load("em_num_points_theta", pheyl2_extraction_params.num_points_theta, 5);
+            if (pheyl2_extraction_params.num_points_theta % 2 == 0)
+            {
+                pheyl2_extraction_params.num_points_theta += 1;
+                pout() << "Parameter: num_points_theta incompatible with "
+                          "Simpson's "
+                       << "rule so increased by 1.\n";
+            }
+            pp.load("em_extraction_center", pheyl2_extraction_params.center, center);
+
+            if (pp.contains("em_modes"))
+            {
+                pp.load("em_num_modes", pheyl2_extraction_params.num_modes);
+                std::vector<int> pheyl2_extraction_modes_vect(
+                    2 * pheyl2_extraction_params.num_modes);
+                pp.load("em_modes", pheyl2_extraction_modes_vect,
+                        2 * pheyl2_extraction_params.num_modes);
+                pheyl2_extraction_params.modes.resize(pheyl2_extraction_params.num_modes);
+                for (int i = 0; i < pheyl2_extraction_params.num_modes; ++i)
+                {
+                    pheyl2_extraction_params.modes[i].first =
+                        pheyl2_extraction_modes_vect[2 * i];
+                    pheyl2_extraction_params.modes[i].second =
+                        pheyl2_extraction_modes_vect[2 * i + 1];
+                }
+            }
+            else
+            {
+                // by default extraction (l,m) = (2,0), (2,1) and (2,2)
+                pheyl2_extraction_params.num_modes = 3;
+                pheyl2_extraction_params.modes.resize(3);
+                for (int i = 0; i < 3; ++i)
+                {
+                    pheyl2_extraction_params.modes[i].first = 2;
+                    pheyl2_extraction_params.modes[i].second = i;
+                }
+            }
+
+            pp.load("em_write_extraction", pheyl2_extraction_params.write_extraction,
+                    false);
+
+            std::string pheyl2_extraction_path;
+            if (pp.contains("em_extraction_subpath"))
+            {
+                pp.load("em_extraction_subpath", pheyl2_extraction_path);
+                if (!pheyl2_extraction_path.empty() && pheyl2_extraction_path.back() != '/')
+                    pheyl2_extraction_path += "/";
+                if (output_path != "./" && !output_path.empty())
+                    pheyl2_extraction_path = output_path + pheyl2_extraction_path;
+            }
+            else
+                pheyl2_extraction_path = data_path;
+
+            pheyl2_extraction_params.data_path = data_path;
+            pheyl2_extraction_params.extraction_path = pheyl2_extraction_path;
+
+            // default names to Weyl extraction
+            pp.load("em_extraction_file_prefix",
+                    pheyl2_extraction_params.extraction_file_prefix,
+                    std::string("Pheyl2_extraction_"));
+            pp.load("em_integral_file_prefix",
+                    pheyl2_extraction_params.integral_file_prefix,
+                    std::string("Pheyl2_mode_"));
+        }
+
+
         pp.load("flux_number_of_radii", angmomflux_params.num_extraction_radii,
                 1);
         pp.load("flux_write_extraction", angmomflux_params.write_extraction,
@@ -347,8 +449,10 @@ class SimulationParametersBase : public ChomboParameters
     CCZ4_params_t<> ccz4_params;
 
     bool activate_extraction;
+    bool activate_em_extraction;
     spherical_extraction_params_t extraction_params;
     spherical_extraction_params_t angmomflux_params;
+    spherical_extraction_params_t pheyl2_extraction_params;
     bool do_flux_integration;
 
 #ifdef USE_AHFINDER

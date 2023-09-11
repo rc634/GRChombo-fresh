@@ -34,6 +34,7 @@
 
 // FOR EM extraction_level
 #include "Pheyl2.hpp"
+#include "PheylExtraction.hpp"
 
 // For Noether Charge calculation
 #include "EMDLorentzScalars.hpp"
@@ -247,6 +248,7 @@ void EMDBHLevel::doAnalysis()
     #endif
 
 
+    // Gravitational Wave analysis
     if (m_p.activate_weyl_extraction == 1 &&
         at_level_timestep_multiple(
             m_p.extraction_params.min_extraction_level()))
@@ -280,9 +282,41 @@ void EMDBHLevel::doAnalysis()
         }
     }
 
-    // Do Electromagnetic
-    if (m_p.activate_em_extraction == 1)
+    // Do Electromagnetic Radiation Integration
+    if (m_p.activate_pheyl_extraction == 1 &&
+        at_level_timestep_multiple(
+            m_p.extraction_params.min_extraction_level()))
     {
+        CH_TIME("EMDBHLevel::doAnalysis::EMRadExtraction");
+
+        fillAllGhosts();
+        // CouplingFunction coupling_function(m_p.coupling_function_params);
+        // EinsteinMaxwellDilatonFieldWithCoupling emd_field(coupling_function);
+
+        // fill grid with pheyl2 im and real components
+        auto pheyl2_compute_pack = make_compute_pack(
+            Pheyl2(m_p.extraction_params.extraction_center, m_dx));
+        BoxLoops::loop(pheyl2_compute_pack, m_state_new, m_state_diagnostics,
+                       EXCLUDE_GHOST_CELLS);
+
+
+        // Do the extraction on the min extraction level
+        if (m_level == m_p.extraction_params.min_extraction_level())
+        {
+            if (m_verbosity)
+            {
+                pout() << "BinaryBSLevel::specificPostTimeStep:"
+                          " Extracting electromagnetic waves."
+                       << endl;
+            }
+
+            // Refresh the interpolator and do the interpolation
+            m_bh_amr.m_interpolator->refresh();
+            PheylExtraction em_extraction(m_p.pheyl2_extraction_params,
+                                         m_dt, m_time,
+                                         first_step, m_restart_time);
+            em_extraction.execute_query(m_bh_amr.m_interpolator);
+        }
     }
 
     // noether charge, max mod phi, min chi, constraint violations

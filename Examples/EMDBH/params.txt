@@ -182,18 +182,19 @@ activate_extraction = true
 # Mass extraction params
 mass_extraction_center = 0 0 0
 activate_mass_extraction = 1
-num_mass_extraction_radii = 2
-mass_extraction_radii = 2. 3.
+num_mass_extraction_radii = 3
+mass_extraction_radii = 6. 10. 14.
 mass_extraction_levels = 0 0 0
 num_points_phi_mass = 16
 num_points_theta_mass = 24
 
+#doubles up as em extraction params too for now
 # GW extraction params
 #default center to grid center, uncomment to change
 extraction_center = 0 0 0
 activate_gw_extraction = 1
-num_extraction_radii = 2
-extraction_radii = 2. 3. # can use extraction_radius for one radius
+num_extraction_radii = 3
+extraction_radii = 6. 10. 14. # can use extraction_radius for one radius
 extraction_levels = 0 0 0 # can use extraction_level for one radius
 num_points_phi = 64 64 64
 num_points_theta = 60
@@ -206,11 +207,27 @@ modes = 2 0
         5 0
         6 0
 
-## check for duplicate params between pheyl and weyl
 
 # EM extraction params
-
+#default center to grid center, uncomment to change
+em_extraction_center = 0 0 0
 activate_em_extraction = 1
+em_num_extraction_radii = 3
+em_extraction_radii = 6. 10. 14. # can use extraction_radius for one radius
+em_extraction_levels = 0 0 0 # can use extraction_level for one radius
+em_num_points_phi = 64 64 64
+em_num_points_theta = 60
+em_num_modes = 9
+em_modes = 1 0
+           1 1
+           2 0
+           2 1
+           2 2
+           3 0
+           4 0
+           5 0
+           6 0
+
 
 
 
