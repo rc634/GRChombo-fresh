@@ -169,6 +169,7 @@ AH_verbose = 1
 AH_set_origins_to_punctures 1
 AH_num_ranks 0
 horizon_centre_1 = 4.0 0.0 0.0
+horizon_centre_2 = -4.0 0.0 0.0
 AH_num_points_u = 25
 AH_num_points_v = 18
 AH_coords_subpath = "ah_data/coords"
