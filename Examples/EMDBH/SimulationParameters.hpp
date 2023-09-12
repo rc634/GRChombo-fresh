@@ -57,6 +57,8 @@ class SimulationParameters : public SimulationParametersBase
         #endif
         pp.load("horizon_centre_1", horizon_centre_1,
                 {0.5 * L, 0.5 * L, 0.5 * L});
+        pp.load("horizon_centre_2", horizon_centre_2,
+                {0.5 * L, 0.5 * L, 0.5 * L});
 
         // Mass extraction
         pp.load("activate_mass_extraction", activate_mass_extraction, 0);
@@ -184,6 +186,7 @@ class SimulationParameters : public SimulationParametersBase
     #ifdef USE_AHFINDER
     double AH_initial_guess;
     std::array<double, CH_SPACEDIM> horizon_centre_1;
+    std::array<double, CH_SPACEDIM> horizon_centre_2;
     #endif
 };
 

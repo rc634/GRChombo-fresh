@@ -57,9 +57,13 @@ int runGRChombo(int argc, char *argv[])
     #ifdef USE_AHFINDER
         if (sim_params.AH_activate)
         {
-            AHSphericalGeometry sph(sim_params.horizon_centre_1);
-            bh_amr.m_ah_finder.add_ah(sph, sim_params.AH_initial_guess,
+            AHSphericalGeometry sph1(sim_params.horizon_centre_1);
+            AHSphericalGeometry sph2(sim_params.horizon_centre_2);
+            bh_amr.m_ah_finder.add_ah(sph1, sim_params.AH_initial_guess,
                                       sim_params.AH_params);
+            bh_amr.m_ah_finder.add_ah(sph2, sim_params.AH_initial_guess,
+                                      sim_params.AH_params);
+            bh_amr.m_ah_finder.add_ah_merger(0, 1, sim_params.AH_params);
         }
     #endif
 
