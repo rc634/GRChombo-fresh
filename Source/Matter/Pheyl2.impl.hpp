@@ -162,8 +162,9 @@ Pheyl2::compute_null_tetrad(const Vars<data_t> &vars,
 
     FOR(i, j, k, m)
     {
-        out.w[i] += 1. / sqrt(chi) * h_UU[i][j] * epsilon[j][k][m] * out.v[k] *
-                    out.u[m];
+        // don't bothr about root chi here, we normalise later
+        // we just make w mutually perp to u and v here
+        out.w[i] += h_UU[i][j] * epsilon[j][k][m] * out.v[k] * out.u[m];
     }
 
     // Gram Schmitt orthonormalisation
