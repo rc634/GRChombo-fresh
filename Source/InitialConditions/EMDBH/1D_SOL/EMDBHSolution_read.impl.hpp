@@ -28,7 +28,7 @@ void EMDBHSolution_read::read_from_file()
     std::ifstream readfile;
 
     // maybe guard this ??
-    readfile.open("/Users/admin/Documents/robin/GRChombo-fresh/Examples/EMDBH/initial_data/id_lambda-200.dat");
+    readfile.open("initial_data/id_lambda-200.dat");
 
 
 
