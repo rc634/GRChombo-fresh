@@ -10,7 +10,8 @@
 enum
 {
     c_mod_F,
-    c_mod_A,
+    c_maxwellE,
+    c_maxwellB,
     c_phi_ham, // canonical hamiltonian of scalar field
 
     c_Ham,
@@ -44,7 +45,8 @@ namespace DiagnosticVariables
 static const std::array<std::string, NUM_DIAGNOSTIC_VARS> variable_names = {
 
     "mod_F",
-    "mod_A",
+    "maxwellE",
+    "maxwellB",
     "phi_ham",
 
     "Ham",

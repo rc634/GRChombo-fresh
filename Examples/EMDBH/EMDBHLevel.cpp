@@ -22,7 +22,7 @@
 #include "EMDExtractionTaggingCriterion.hpp"
 
 // Problem specific includes
-#include "EMDBH.hpp"
+#include "EMDBH_read.hpp"
 #include "EMDCouplingFunction.hpp"
 #include "EinsteinMaxwellDilatonField.hpp"
 #include "ComputePack.hpp"
@@ -71,7 +71,7 @@ void EMDBHLevel::initialData()
         pout() << "EMDBHLevel::initialData " << m_level << endl;
 
     // First initalise a EMDBH object
-    EMDBH emdbh(m_p.emdbh_params, m_p.coupling_function_params,
+    EMDBH_read emdbh(m_p.emdbh_params, m_p.coupling_function_params,
                          m_p.G_Newton, m_dx, m_verbosity);
 
    if (m_verbosity)
@@ -116,7 +116,8 @@ void EMDBHLevel::preCheckpointLevel()
                               emd_field, m_dx, m_p.G_Newton, c_Ham,
                               Interval(c_Mom1, c_Mom3)),
 
-              EMDLorentzScalars(m_dx),
+              EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>(m_dx,
+                                                 m_p.coupling_function_params),
 
               EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                               emd_field, m_dx, c_rho,
@@ -162,7 +163,8 @@ void EMDBHLevel::prePlotLevel()
                 emd_field, m_dx, m_p.G_Newton, c_Ham,
                 Interval(c_Mom1, c_Mom3)),
 
-            EMDLorentzScalars(m_dx),
+            EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>(m_dx,
+                                                 m_p.coupling_function_params),
 
             EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                 emd_field, m_dx, c_rho,
@@ -322,8 +324,13 @@ void EMDBHLevel::doAnalysis()
     // noether charge, max mod phi, min chi, constraint violations
     if (at_level_timestep_multiple(0))
     {
-        BoxLoops::loop(EMDLorentzScalars(m_dx), m_state_new, m_state_diagnostics,
-                       EXCLUDE_GHOST_CELLS);
+        CouplingFunction coupling_function(m_p.coupling_function_params);
+        EinsteinMaxwellDilatonFieldWithCoupling emd_field(coupling_function);
+        BoxLoops::loop(
+          EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>
+                                            (m_dx,m_p.coupling_function_params),
+                                               m_state_new, m_state_diagnostics,
+                                                           EXCLUDE_GHOST_CELLS);
     }
     if (m_level == 0)
     {

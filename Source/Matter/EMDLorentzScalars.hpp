@@ -9,27 +9,33 @@
 #include "ADMConformalVars.hpp" // needed for CCz4 and matter variables
 #include "Cell.hpp"
 #include "EinsteinMaxwellDilatonField.hpp"
+#include "MatterCCZ4.hpp" // need?
+#include "CCZ4Vars.hpp" // need?
 #include "FourthOrderDerivatives.hpp"
 #include "Coordinates.hpp"
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"
 #include "UserVariables.hpp"
 #include "simd.hpp"
+#include "EMDCouplingFunction.hpp"
 
 //! Calculates the Noether Charge integrand values and the modulus of the
 //! complex scalar field on the grid
-class EMDLorentzScalars
+template <class matter_t> class EMDLorentzScalars
 {
     // Need matter variables and chi
     template <class data_t>
     using ADMVars = ADMConformalVars::VarsWithGauge<data_t>;
     template <class data_t>
-    using MatterVars = EinsteinMaxwellDilatonField<>::Vars<data_t>;
+    //using MatterVars = EinsteinMaxwellDilatonField<>::Vars<data_t>;
+    using MatterVars = typename MatterCCZ4<matter_t>::template Vars<data_t>;
 
     double m_dx;
+    CouplingFunction::params_t m_coupling_params;
 
   public:
-    EMDLorentzScalars(double a_dx) : m_dx(a_dx){}
+    EMDLorentzScalars(double a_dx, CouplingFunction::params_t &a_coupling_params)
+    : m_dx(a_dx), m_coupling_params(a_coupling_params) {}
 
     template <class data_t> void compute(Cell<data_t> current_cell) const
     {
@@ -40,6 +46,12 @@ class EMDLorentzScalars
         const auto adm_d1 = m_deriv.template diff1<ADMVars>(current_cell);
         const auto matter_d1 = m_deriv.template diff1<MatterVars>(current_cell);
         const auto matter_d2 = m_deriv.template diff2<MatterVars>(current_cell);
+
+        // local variables for EMD coupling
+        data_t alpha = m_coupling_params.alpha;
+        data_t f0 = m_coupling_params.f0;
+        data_t f1 = m_coupling_params.f1;
+        data_t f2 = m_coupling_params.f2;
 
         // root minus g
         data_t root_minus_g = pow(adm_vars.chi, -1.5)*adm_vars.lapse;
@@ -114,6 +126,7 @@ class EMDLorentzScalars
 
 
 
+
         ////////////////////////////////////////////
         // maxwell constriants
         ////////////////////////////////////////////
@@ -123,6 +136,16 @@ class EMDLorentzScalars
         Tensor<2, data_t, 3> DiEj;
         data_t magnetic_constraint=0.;
         data_t electric_constraint=0.;
+        data_t EDphi=0.; //E dot D phi
+
+        // declare the default coupling values
+        data_t f_of_phi = 0.0;
+        data_t f_prime_of_phi = 0.0;
+        data_t coupling_of_phi = 1.0;
+        data_t local_phi = matter_vars.phi;
+
+        compute_coupling_of_phi<data_t>(alpha,f0,f1,f2,f_of_phi,
+                                f_prime_of_phi,coupling_of_phi,local_phi);
 
         FOR1(i)
         {
@@ -138,6 +161,7 @@ class EMDLorentzScalars
         // partial derivs
         FOR2(i,j)
         {
+            EDphi += Ei[i] * matter_d1.phi[j] * h_UU[i][j] * adm_vars.chi;
             electric_constraint += DiEj[i][j] * h_UU[i][j] * adm_vars.chi;
             magnetic_constraint += DiBj[i][j] * h_UU[i][j] * adm_vars.chi;
         }
@@ -151,8 +175,11 @@ class EMDLorentzScalars
                                      * h_UU[i][j] * adm_vars.chi;
         }
 
-        H2norm_maxwell_constraints = electric_constraint * electric_constraint
-                                   + magnetic_constraint * magnetic_constraint;
+        electric_constraint = coupling_of_phi * ( electric_constraint
+                               - 2. * EDphi * f_prime_of_phi );
+
+        // H2norm_maxwell_constraints = electric_constraint * electric_constraint
+        //                            + magnetic_constraint * magnetic_constraint;
 
 
 
@@ -162,10 +189,11 @@ class EMDLorentzScalars
 
 
         // store variables
-        //current_cell.store_vars(phi_hamiltonian, c_phi_ham);
-        current_cell.store_vars(sqrt(H2norm_damping), c_phi_ham);
+        current_cell.store_vars(phi_hamiltonian, c_phi_ham);
+        //current_cell.store_vars(sqrt(H2norm_damping), c_phi_ham);
         current_cell.store_vars(FF, c_mod_F);
-        current_cell.store_vars(sqrt(H2norm_maxwell_constraints), c_mod_A);
+        current_cell.store_vars(electric_constraint, c_maxwellE);
+        current_cell.store_vars(magnetic_constraint, c_maxwellB);
     }
 };
 

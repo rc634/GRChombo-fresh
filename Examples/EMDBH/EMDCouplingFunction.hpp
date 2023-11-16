@@ -49,6 +49,34 @@ class CouplingFunction
         coupling_of_phi = exp(-2.*f_of_phi);
 
     }
+
+
 };
+
+
+
+// standalone function
+template <class data_t>
+void compute_coupling_of_phi(
+                       data_t a_alpha,
+                       data_t a_f0,
+                       data_t a_f1,
+                       data_t a_f2,
+                       data_t &f_of_phi,
+                       data_t &f_prime_of_phi,
+                       data_t &coupling_of_phi,
+                       data_t &a_phi)
+{
+    // calculate f(phi) and then teh exponential coupling
+    f_of_phi = a_f0 + a_f1 * a_phi
+                           + a_f2 * a_phi * a_phi;
+    f_prime_of_phi = a_f1 + 2. * a_f2 * a_phi;
+
+    f_of_phi *= a_alpha;
+    f_prime_of_phi *= a_alpha;
+
+    coupling_of_phi = exp(-2.*f_of_phi);
+
+}
 
 #endif /* COUPLINGFUNCTION_HPP_ */
