@@ -3,7 +3,7 @@
 verbosity = 0
 chk_prefix = chk/Sim_
 plot_prefix = plt/Sim_p_
-restart_file = chk/Sim_000100.3d.hdf5
+#restart_file = chk/Sim_000100.3d.hdf5
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
@@ -96,8 +96,8 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
 # Set up time steps
 # dt will be dx*dt_multiplier on each grid level
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
-checkpoint_interval = 50
-plot_interval = 10
+checkpoint_interval = 20
+plot_interval = 5
 dt_multiplier = 0.25
 stop_time = 2000.
 
@@ -158,7 +158,7 @@ star_centre = 0 0 0
 # coupling is e^(-2*alpha*f) to maxwell part
 # f = f0 + f1 phi + f2 phi^2
 # set alpha = 0 for no coupling between scalar and maxwell
-emd_alpha = 1.0
+emd_alpha = 0.0 # 1.0
 emd_f0 = 0.0
 emd_f1 = 0.0
 emd_f2 = -2513.2741228718346

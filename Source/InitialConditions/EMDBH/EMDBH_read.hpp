@@ -48,6 +48,6 @@ class EMDBH_read
     int m_verbosity;
 };
 
-#include "EMDBH_READ.impl.hpp"
+#include "EMDBH_read.impl.hpp"
 
 #endif /* EMDBH_READ_HPP_ */
