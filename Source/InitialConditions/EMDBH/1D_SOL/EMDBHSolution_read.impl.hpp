@@ -28,7 +28,7 @@ void EMDBHSolution_read::read_from_file()
     std::ifstream readfile;
 
     // maybe guard this ??
-    readfile.open("initial_data/id_lambda-200.dat");
+    readfile.open("initial_data/id_lambda-20.dat");
 
 
 
@@ -49,7 +49,7 @@ void EMDBHSolution_read::read_from_file()
 
             if (indices.size() < 21)
             {
-                pout() << "Warning, cannot properly read id_lambda-200.dat"
+                pout() << "Warning, cannot properly read initial data dat"
                        << std::endl;
             }
             else
