@@ -3,7 +3,7 @@
 verbosity = 0
 chk_prefix = chk/Sim_
 plot_prefix = plt/Sim_p_
-#restart_file = chk/Sim_000100.3d.hdf5
+#restart_file = chk/Sim_000800.3d.hdf5
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
@@ -13,7 +13,7 @@ N3 = 256
 
 # Length of longest box side, dx_coarsest = L/N(max)
 # NB if non cubic, this determines dx for all sides
-L = 128
+L = 256
 
 # robin's manual grid centre variable
 robin_manual_origin 0. 0. 0. # currently unused
@@ -21,13 +21,13 @@ robin_manual_origin 0. 0. 0. # currently unused
 # Regridding
 # Thresholds on the change across a cell which prompts regrid
 regrid_threshold_A = 6.
-regrid_threshold_phi = 0.3
-regrid_threshold_chi = 0.3
+regrid_threshold_phi = 0.6
+regrid_threshold_chi = 0.6
 
 
 # Level data
 # Maximum number of times you can regrid above coarsest level
-max_level = 4 # There are (max_level+1) grids, so min is zero
+max_level = 5 # There are (max_level+1) grids, so min is zero
 # Frequency of regridding at each level
 # Need one for each level, ie max_level+1 items
 # Generally you do not need to regrid frequently on every level
@@ -42,9 +42,9 @@ fill_ratio = 0.7
 # Periodic directions - 0 = false, 1 = true
 isPeriodic = 0 0 0
 # if not periodic, then specify the boundary type
-# 0 = static, 1 = sommerfeld, 2 = reflective
+# 0 = static, 1 = sommerfeld, 2 = reflective, 3 interpoaltive
 # (see BoundaryConditions.hpp for details)
-hi_boundary = 3 3 3
+hi_boundary = 1 1 1
 lo_boundary = 2 2 2
 
 # if sommerfeld boundaries selected, must select
@@ -96,8 +96,8 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
 # Set up time steps
 # dt will be dx*dt_multiplier on each grid level
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
-checkpoint_interval = 20
-plot_interval = 5
+checkpoint_interval = 50
+plot_interval = 10
 dt_multiplier = 0.25
 stop_time = 2000.
 
@@ -158,10 +158,10 @@ star_centre = 0 0 0
 # coupling is e^(-2*alpha*f) to maxwell part
 # f = f0 + f1 phi + f2 phi^2
 # set alpha = 0 for no coupling between scalar and maxwell
-emd_alpha = 0.0 # 1.0
+emd_alpha = 1.0
 emd_f0 = 0.0
 emd_f1 = 0.0
-emd_f2 = -2513.2741228718346
+emd_f2 = -251.32741228718346 # -2513.2741228718346
 
 # AH FINDER params
 AH_activate = 0
