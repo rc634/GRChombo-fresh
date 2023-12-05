@@ -270,6 +270,111 @@ class SimulationParametersBase : public ChomboParameters
         }
 
 
+
+        ////////////
+        // REALSCALAR PARAMS
+        ////////////
+
+        pp.load("activate_em_extraction", activate_em_extraction, false);
+
+        if (activate_em_extraction)
+        {
+            pp.load("rs_num_extraction_radii",
+                    realscalar_extraction_params.num_extraction_radii, 1);
+
+            // Check for multiple extraction radii, otherwise load single
+            // radius/level (for backwards compatibility).
+            if (pp.contains("rs_extraction_levels"))
+            {
+                pp.load("rs_extraction_levels",
+                        realscalar_extraction_params.extraction_levels,
+                        realscalar_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("rs_extraction_level", realscalar_extraction_params.extraction_levels,
+                        1, 0);
+            }
+            if (pp.contains("rs_extraction_radii"))
+            {
+                pp.load("rs_extraction_radii", realscalar_extraction_params.extraction_radii,
+                        realscalar_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("rs_extraction_radius", realscalar_extraction_params.extraction_radii,
+                        1, 0.1);
+            }
+
+            pp.load("rs_num_points_phi", realscalar_extraction_params.num_points_phi, 2);
+            pp.load("rs_num_points_theta", realscalar_extraction_params.num_points_theta, 5);
+            if (realscalar_extraction_params.num_points_theta % 2 == 0)
+            {
+                realscalar_extraction_params.num_points_theta += 1;
+                pout() << "Parameter: num_points_theta incompatible with "
+                          "Simpson's "
+                       << "rule so increased by 1.\n";
+            }
+            pp.load("rs_extraction_center", realscalar_extraction_params.center, center);
+
+            if (pp.contains("rs_modes"))
+            {
+                pp.load("rs_num_modes", realscalar_extraction_params.num_modes);
+                std::vector<int> realscalar_extraction_modes_vect(
+                    2 * realscalar_extraction_params.num_modes);
+                pp.load("rs_modes", realscalar_extraction_modes_vect,
+                        2 * realscalar_extraction_params.num_modes);
+                realscalar_extraction_params.modes.resize(realscalar_extraction_params.num_modes);
+                for (int i = 0; i < realscalar_extraction_params.num_modes; ++i)
+                {
+                    realscalar_extraction_params.modes[i].first =
+                        realscalar_extraction_modes_vect[2 * i];
+                    realscalar_extraction_params.modes[i].second =
+                        realscalar_extraction_modes_vect[2 * i + 1];
+                }
+            }
+            else
+            {
+                // by default extraction (l,m) = (2,0), (2,1) and (2,2)
+                realscalar_extraction_params.num_modes = 3;
+                realscalar_extraction_params.modes.resize(3);
+                for (int i = 0; i < 3; ++i)
+                {
+                    realscalar_extraction_params.modes[i].first = 2;
+                    realscalar_extraction_params.modes[i].second = i;
+                }
+            }
+
+            pp.load("rs_write_extraction", realscalar_extraction_params.write_extraction,
+                    false);
+
+            std::string realscalar_extraction_path;
+            if (pp.contains("rs_extraction_subpath"))
+            {
+                pp.load("rs_extraction_subpath", realscalar_extraction_path);
+                if (!realscalar_extraction_path.empty() && realscalar_extraction_path.back() != '/')
+                    realscalar_extraction_path += "/";
+                if (output_path != "./" && !output_path.empty())
+                    realscalar_extraction_path = output_path + realscalar_extraction_path;
+            }
+            else
+                realscalar_extraction_path = data_path;
+
+            realscalar_extraction_params.data_path = data_path;
+            realscalar_extraction_params.extraction_path = realscalar_extraction_path;
+
+            // default names to Weyl extraction
+            pp.load("rs_extraction_file_prefix",
+                    realscalar_extraction_params.extraction_file_prefix,
+                    std::string("RealScalar_extraction_"));
+            pp.load("rs_integral_file_prefix",
+                    realscalar_extraction_params.integral_file_prefix,
+                    std::string("RealScalar_mode_"));
+        }
+
+
+
+
         pp.load("flux_number_of_radii", angmomflux_params.num_extraction_radii,
                 1);
         pp.load("flux_write_extraction", angmomflux_params.write_extraction,
@@ -453,6 +558,7 @@ class SimulationParametersBase : public ChomboParameters
     spherical_extraction_params_t extraction_params;
     spherical_extraction_params_t angmomflux_params;
     spherical_extraction_params_t pheyl2_extraction_params;
+    spherical_extraction_params_t realscalar_extraction_params;
     bool do_flux_integration;
 
 #ifdef USE_AHFINDER

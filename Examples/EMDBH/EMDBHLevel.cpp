@@ -36,6 +36,9 @@
 #include "Pheyl2.hpp"
 #include "PheylExtraction.hpp"
 
+// For Scalar Field integrator
+#include "RealScalarExtraction.hpp"
+
 // For Noether Charge calculation
 #include "EMDLorentzScalars.hpp"
 #include "SmallDataIO.hpp"
@@ -318,6 +321,34 @@ void EMDBHLevel::doAnalysis()
                                          m_dt, m_time,
                                          first_step, m_restart_time);
             em_extraction.execute_query(m_bh_amr.m_interpolator);
+        }
+    }
+
+    // Do Scalar Integration
+    if (m_p.activate_realscalar_extraction == 1 &&
+        at_level_timestep_multiple(
+            m_p.extraction_params.min_extraction_level()))
+    {
+        CH_TIME("EMDBHLevel::doAnalysis::RealScalarExtraction");
+
+        fillAllGhosts();
+
+        // Do the extraction on the min extraction level
+        if (m_level == m_p.extraction_params.min_extraction_level())
+        {
+            if (m_verbosity)
+            {
+                pout() << "BinaryBSLevel::specificPostTimeStep:"
+                          " Extracting RealScalar integrals."
+                       << endl;
+            }
+
+            // Refresh the interpolator and do the interpolation
+            m_bh_amr.m_interpolator->refresh();
+            RealScalarExtraction realscalar_extraction
+                                              (m_p.realscalar_extraction_params,
+                                      m_dt, m_time, first_step, m_restart_time);
+            realscalar_extraction.execute_query(m_bh_amr.m_interpolator);
         }
     }
 

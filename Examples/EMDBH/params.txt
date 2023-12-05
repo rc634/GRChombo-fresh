@@ -7,13 +7,13 @@ plot_prefix = plt/Sim_p_
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
-N1 = 256
-N2 = 256
-N3 = 256
+N1 = 128
+N2 = 128
+N3 = 128
 
 # Length of longest box side, dx_coarsest = L/N(max)
 # NB if non cubic, this determines dx for all sides
-L = 256
+L = 32
 
 # robin's manual grid centre variable
 robin_manual_origin 0. 0. 0. # currently unused
@@ -21,13 +21,13 @@ robin_manual_origin 0. 0. 0. # currently unused
 # Regridding
 # Thresholds on the change across a cell which prompts regrid
 regrid_threshold_A = 6.
-regrid_threshold_phi = 0.6
-regrid_threshold_chi = 0.6
+regrid_threshold_phi = 0.3
+regrid_threshold_chi = 0.3
 
 
 # Level data
 # Maximum number of times you can regrid above coarsest level
-max_level = 5 # There are (max_level+1) grids, so min is zero
+max_level = 1 # There are (max_level+1) grids, so min is zero
 # Frequency of regridding at each level
 # Need one for each level, ie max_level+1 items
 # Generally you do not need to regrid frequently on every level
@@ -97,7 +97,7 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
 # dt will be dx*dt_multiplier on each grid level
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 50
-plot_interval = 10
+plot_interval = 1
 dt_multiplier = 0.25
 stop_time = 2000.
 
@@ -188,11 +188,10 @@ mass_extraction_levels = 0 0 0
 num_points_phi_mass = 16
 num_points_theta_mass = 24
 
-#doubles up as em extraction params too for now
 # GW extraction params
 #default center to grid center, uncomment to change
 extraction_center = 0 0 0
-activate_gw_extraction = 0
+activate_gw_extraction = 1
 num_extraction_radii = 3
 extraction_radii = 0.6 1.0 1.4 # can use extraction_radius for one radius
 extraction_levels = 0 0 0 # can use extraction_level for one radius
@@ -211,7 +210,7 @@ modes = 2 0
 # EM extraction params
 #default center to grid center, uncomment to change
 em_extraction_center = 0 0 0
-activate_em_extraction = 0
+activate_em_extraction = 1
 em_num_extraction_radii = 3
 em_extraction_radii = 0.6 1.0 1.4 # can use extraction_radius for one radius
 em_extraction_levels = 0 0 0 # can use extraction_level for one radius
@@ -227,6 +226,29 @@ em_modes = 1 0
            4 0
            5 0
            6 0
+
+
+ # RealScalar extraction params (realscalar = rs)
+ #default center to grid center, uncomment to change
+ rs_extraction_center = 0 0 0
+ activate_rs_extraction = 1
+ rs_num_extraction_radii = 3
+ rs_extraction_radii = 5. 10. 20. # can use extraction_radius for one radius
+ rs_extraction_levels = 0 0 0 # can use extraction_level for one radius
+ rs_num_points_phi = 64 64 64
+ rs_num_points_theta = 60
+ rs_num_modes = 10
+ rs_modes = 0 0 
+            1 0
+            1 1
+            2 0
+            2 1
+            2 2
+            3 0
+            4 0
+            5 0
+            6 0
+
 
 
 

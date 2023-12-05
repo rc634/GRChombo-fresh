@@ -132,7 +132,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
 
         vars.lapse = sqrt(vars.chi);
 
-        vars.phi += -m_1d_sol.get_value_interp(m_1d_sol.phi,r)*root_kappa;
+        vars.phi += m_1d_sol.get_value_interp(m_1d_sol.phi,r)*root_kappa;
 
         vars.Pi += -m_1d_sol.get_value_interp(m_1d_sol.pi,r)*root_kappa;
 
