@@ -7,13 +7,13 @@ plot_prefix = plt/Sim_p_
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
-N1 = 128
-N2 = 128
-N3 = 128
+N1 = 256
+N2 = 256
+N3 = 256
 
 # Length of longest box side, dx_coarsest = L/N(max)
 # NB if non cubic, this determines dx for all sides
-L = 128
+L = 256
 
 # robin's manual grid centre variable
 robin_manual_origin 0. 0. 0. # currently unused
@@ -21,8 +21,8 @@ robin_manual_origin 0. 0. 0. # currently unused
 # Regridding
 # Thresholds on the change across a cell which prompts regrid
 regrid_threshold_A = 6.
-regrid_threshold_phi = 0.3
-regrid_threshold_chi = 0.3
+regrid_threshold_phi = 0.6
+regrid_threshold_chi = 0.6
 
 
 # Level data
@@ -158,10 +158,10 @@ star_centre = 0 0 0
 # coupling is e^(-2*alpha*f) to maxwell part
 # f = f0 + f1 phi + f2 phi^2
 # set alpha = 0 for no coupling between scalar and maxwell
-emd_alpha = 1.0 # should be 1.0 here really for contraint satisfaction
+emd_alpha = 1.0
 emd_f0 = 0.0
 emd_f1 = 0.0
-emd_f2 = -753.9822368615502 # -251.32741228718346 # -2513.2741228718346
+emd_f2 = -251.32741228718346 # -2513.2741228718346
 
 # AH FINDER params
 AH_activate = 0
@@ -188,12 +188,13 @@ mass_extraction_levels = 0 0 0
 num_points_phi_mass = 16
 num_points_theta_mass = 24
 
+#doubles up as em extraction params too for now
 # GW extraction params
 #default center to grid center, uncomment to change
 extraction_center = 0 0 0
-activate_gw_extraction = 1
+activate_gw_extraction = 0
 num_extraction_radii = 3
-extraction_radii = 20. 40. 60. # can use extraction_radius for one radius
+extraction_radii = 0.6 1.0 1.4 # can use extraction_radius for one radius
 extraction_levels = 0 0 0 # can use extraction_level for one radius
 num_points_phi = 64 64 64
 num_points_theta = 60
@@ -210,9 +211,9 @@ modes = 2 0
 # EM extraction params
 #default center to grid center, uncomment to change
 em_extraction_center = 0 0 0
-activate_em_extraction = 1
+activate_em_extraction = 0
 em_num_extraction_radii = 3
-em_extraction_radii = 5. 10. 20. # can use extraction_radius for one radius
+em_extraction_radii = 0.6 1.0 1.4 # can use extraction_radius for one radius
 em_extraction_levels = 0 0 0 # can use extraction_level for one radius
 em_num_points_phi = 64 64 64
 em_num_points_theta = 60
@@ -228,7 +229,7 @@ em_modes = 1 0
            6 0
 
 
- # RealScalar extraction params (realscalar = rs)
+ # realscalar extraction params (realscalar = rs)
  #default center to grid center, uncomment to change
  rs_extraction_center = 0 0 0
  activate_rs_extraction = 1
@@ -237,15 +238,16 @@ em_modes = 1 0
  rs_extraction_levels = 0 0 0 # can use extraction_level for one radius
  rs_num_points_phi = 64 64 64
  rs_num_points_theta = 60
- rs_num_modes = 8
- rs_modes = 0 0 
-            1 0
+ rs_num_modes = 9
+ rs_modes = 1 0
             1 1
             2 0
             2 1
             2 2
             3 0
             4 0
+            5 0
+            6 0
 
 
 

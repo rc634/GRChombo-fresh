@@ -144,6 +144,42 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
 
     }
 
+    ////////////////////////////
+    // flat space spherical harmonic perturbation
+    ////////////////////////////
+
+    // reset coords
+    x = coords.x;
+    z = coords.z;
+    y = coords.y;
+    r = sqrt(x * x + y * y + z * z);
+    safe_r = sqrt(x * x + y * y + z * z + 10e-10);
+    // new coords for angles
+    double rho = sqrt(x * x + y * y);
+    double safe_rho = sqrt(x * x + y * y + 100e-10);
+    double sintheta = rho/safe_r;
+    double costheta = z/safe_r;
+    double sinphi = y/safe_rho;
+    double cosphi = x/safe_rho;
+    double cos2phi = cosphi * cosphi - sinphi * sinphi;
+
+    //spherial harmonic
+    double Y20 = 0.25 * sqrt(5./M_PI) * (3. * costheta * costheta - 1.);
+    double Y22 = 0.25 * sqrt(7.5/M_PI) * (cos2phi * sintheta * sintheta);
+    // Y22 is actually Y22 + Y2-2 halved
+
+    // inward travelling thin shell params
+    double A = 0.0001; // amplitude is A/r in flat space
+    // double A = 0.000666; to match ish the outer part of scalarised solutino
+    double sig = 3.; // standard deviation, width of shell
+    double r_0 = 120.0; // initial radiause of pherical shell
+    double psi = (Y22*A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
+
+    vars.phi += psi;
+    vars.Pi += psi * (r-r_0) / (sig * sig);
+
+
+
     // Store the initial values of the variables
     current_cell.store_vars(vars);
 }
