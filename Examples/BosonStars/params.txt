@@ -3,17 +3,17 @@
 verbosity = 0
 chk_prefix = chk/Sim_
 plot_prefix = plt/Sim_p_
-# restart_file = chk/Sim_000002.3d.hdf5
+restart_file = chk/Sim_000250.3d.hdf5
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
-N1 = 64
-N2 = 64
-N3 = 32
+N1 = 128
+N2 = 128
+N3 = 64
 
 # Length of longest box side, dx_coarsest = L/N(max)
 # NB if non cubic, this determines dx for all sides
-L = 64
+L = 128
 
 # robin's manual grid centre variable
 robin_manual_origin 32. 32. 0. # currently unused
@@ -26,11 +26,11 @@ regrid_threshold_chi = 1
 
 # Level data
 # Maximum number of times you can regrid above coarsest level
-max_level = 1 # There are (max_level+1) grids, so min is zero
+max_level = 4 # There are (max_level+1) grids, so min is zero
 # Frequency of regridding at each level
 # Need one for each level, ie max_level+1 items
 # Generally you do not need to regrid frequently on every level
-regrid_interval = 1 0 0
+regrid_interval = 1 0 0 0
 # Max and min box size - for load balancing
 max_box_size = 32
 min_box_size = 8
@@ -89,7 +89,7 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
 # dt will be dx*dt_multiplier on each grid level
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 50
-plot_interval = 10
+plot_interval = 5
 dt_multiplier = 0.25
 stop_time =1000.0
 
@@ -124,8 +124,8 @@ calculate_constraint_violations = 1
 calculate_noether_charge = 1
 
 # Vars to write to plot files
-num_plot_vars = 9
-plot_vars = chi K lapse phi_Re mod_phi N Weyl4_Re rho Qphi_density
+num_plot_vars = 10
+plot_vars = chi K lapse phi_Re mod_phi N Weyl4_Re rho Qphi_density Ham
 
 # Vars to output infinity norm for at end of coarse time steps
 num_vars_inf_norm = 3
@@ -136,7 +136,7 @@ vars_inf_norm = 0 7 15 # chi, K, Gamma1
 # G_Newton = 0.07957747154594767 # 1/(4pi)
 
 # BosonStar Initial data parameters
-central_amplitude_CSF = 0.04670229571714 # 0.17 # 0.02820947917 #0.0733 # 0.02820947917 # 0.0733 # near kaup limit
+central_amplitude_CSF = 0.00467 # 0.04670229571714 # 0.17 # 0.02820947917 #0.0733 # 0.02820947917 # 0.0733 # near kaup limit
 phase = 0.0
 eigen = 0 # accepts ints < 20, radial excitation mode. If you really need eigen>=20 ask Robin
 gridpoints = 200000
@@ -144,14 +144,14 @@ BS_binary = true # make false for one star
 BS_BH_binary = false # make false for 2 stars, true for one star and one bh
 BS_rapidity = 0.1 # 20.14 # 0.09024418785614682 # 0.1003353 # 1.32 # 0.05004 is v = 1/20, 0.1003353 is v = 1/10
 BS_impact_parameter = 20.0 #separation perpendicular to boost, y
-BS_separation = 15.0 #separation parallel to boost, x
-BlackHoleMass = 0.0 # makes an isotropic black hole at the offset position, make sure BS_separation =/= 0
+BS_separation = 10.0 #separation parallel to boost, x
+BlackHoleMass = 0.5 # makes an isotropic black hole at the offset position, make sure BS_separation =/= 0
 use_thomas_trick = true
 print_asymptotics = true
 
 
 # centre of the star - only uncomment if you want star off centre
-star_centre = 32 32 0
+star_centre = 64 64 0
 
 # Potential params
 scalar_mass = 1.0
