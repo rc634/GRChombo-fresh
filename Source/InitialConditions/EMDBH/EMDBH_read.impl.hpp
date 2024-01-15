@@ -169,7 +169,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     // Y22 is actually Y22 + Y2-2 halved
 
     // inward travelling thin shell params
-    double A = 0.0001; // amplitude is A/r in flat space
+    double A = 0.001; // amplitude is A/r in flat space
     // double A = 0.000666; to match ish the outer part of scalarised solutino
     double sig = 3.; // standard deviation, width of shell
     double r_0 = 120.0; // initial radiause of pherical shell
