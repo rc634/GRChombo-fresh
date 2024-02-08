@@ -37,15 +37,23 @@ class EMDBH_read
     //! Function to compute the value of all the initial vars on the grid
     template <class data_t> void compute(Cell<data_t> current_cell) const;
 
-    EMDBHSolution_read m_1d_sol; /*<
-    The object that stores the solution found by reading data file */
+
 
   protected:
+
     double m_dx;
     double m_G_Newton;
     EMDBH_params_t m_params_EMDBH;  //!< The complex scalar field params
     CouplingFunction::params_t m_params_coupling_function; //!< The potential params
     int m_verbosity;
+    std::string m_data_path;
+
+  public:
+
+    EMDBHSolution_read m_1d_sol; /*<
+    The object that stores the solution found by reading data file */
+
+
 };
 
 #include "EMDBH_read.impl.hpp"

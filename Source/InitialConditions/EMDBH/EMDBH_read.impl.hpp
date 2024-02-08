@@ -19,6 +19,7 @@ inline EMDBH_read::EMDBH_read(EMDBH_params_t a_params_EMDBH,
       m_params_EMDBH(a_params_EMDBH),
       m_params_coupling_function(a_params_coupling_function), m_verbosity(a_verbosity)
 {
+    m_data_path = m_params_EMDBH.data_path;
 }
 
 void EMDBH_read::compute_1d_solution(const double max_r)
@@ -27,7 +28,7 @@ void EMDBH_read::compute_1d_solution(const double max_r)
     {
         // set initial parameters and then run the solver
         pout() << "run m_1d_sol.main()" << endl;
-        m_1d_sol.main();
+        m_1d_sol.main(m_data_path);
         pout() << "completed m_1d_sol.main()" << endl;
     }
     catch (std::exception &exception)
@@ -169,13 +170,17 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     // Y22 is actually Y22 + Y2-2 halved
 
     // inward travelling thin shell params
-    double A = 0.001; // amplitude is A/r in flat space
-    // double A = 0.000666; to match ish the outer part of scalarised solutino
-    double sig = 3.; // standard deviation, width of shell
-    double r_0 = 120.0; // initial radiause of pherical shell
+    // amplitude is A/r in flat space
+    double A = m_params_EMDBH.Ylm_amplitude;
+    // standard deviation, width of gaussian shell
+    double sig = m_params_EMDBH.Ylm_thickness;
+    // initial radiause of shell
+    double r_0 = m_params_EMDBH.Ylm_r0;
+
     double psi = (Y22*A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
 
     vars.phi += psi;
+    // boosted inwards with Pi - flat space approx no outgoing wave
     vars.Pi += psi * (r-r_0) / (sig * sig);
 
 

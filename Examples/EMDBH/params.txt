@@ -27,7 +27,7 @@ regrid_threshold_chi = 0.3
 
 # Level data
 # Maximum number of times you can regrid above coarsest level
-max_level = 5 # There are (max_level+1) grids, so min is zero
+max_level = 2 # There are (max_level+1) grids, so min is zero
 # Frequency of regridding at each level
 # Need one for each level, ie max_level+1 items
 # Generally you do not need to regrid frequently on every level
@@ -162,14 +162,23 @@ emd_alpha = 1.0 # should be 1.0 here really for contraint satisfaction
 emd_f0 = 0.0
 emd_f1 = 0.0
 emd_f2 = -753.9822368615502 # -251.32741228718346 # -2513.2741228718346
+emd_data_path = "initial_data/id_lambda-60.dat" # must be included, or will fail with default in pp.load() 
+
+# spherical harmonic perturbation, thin gaussian shell at large radius, boosted inwards
+Ylm_amplitude = 0.001 # amplitude is ~1/r in flat space
+Ylm_thickness = 3.0 # gaussian standard deviation of shell thickness
+Ylm_r0 = 120.0 # initial radius of perturbation shell
+
 
 # AH FINDER params
-AH_activate = 0
+AH_activate = 1
 AH_verbose = 1
 AH_set_origins_to_punctures = 1
 AH_num_ranks = 0
-horizon_centre_1 = 3.0 0.0 0.0
-horizon_centre_2 = -3.0 0.0 0.0
+AH_num_horizons = 1
+AH_expect_merger = 0
+horizon_centre_1 = 0.0 0.0 0.0
+horizon_centre_2 = -3.0 0.0 0.0 # must set AH_num_horizons = 2
 AH_num_points_u = 25
 AH_num_points_v = 18
 AH_coords_subpath = "ah_data/coords"

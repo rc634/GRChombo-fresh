@@ -17,6 +17,10 @@ struct EMDBH_params_t
     double bh_mass;
     bool binary;
     double Newtons_constant;
+    double Ylm_amplitude;
+    double Ylm_thickness;
+    double Ylm_r0;
+    std::string data_path;
     std::array<double, CH_SPACEDIM>
         star_centre; //!< coordinates of the centre of the emdbh
 };

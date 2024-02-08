@@ -36,6 +36,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("G_Newton", G_Newton, 1.0);
 
         // EMDBH initial data params
+        pp.load("emd_data_path", emdbh_params.data_path); // the default should fail
         pp.load("gridpoints", emdbh_params.gridpoints, 40000);
         pp.load("star_centre", emdbh_params.star_centre,
                 {0.5 * L, 0.5 * L, 0.5 * L});
@@ -51,10 +52,17 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("emd_f1", coupling_function_params.f1, 0.0);
         pp.load("emd_f2", coupling_function_params.f2, 0.0);
 
+        // Perturbation shell params
+        pp.load("Ylm_amplitude", emdbh_params.Ylm_amplitude, 0.);
+        pp.load("Ylm_thickness", emdbh_params.Ylm_thickness, 3.);
+        pp.load("Ylm_r0", emdbh_params.Ylm_r0 , 0.5 * L);
+
         // Apparent Horizon stuff
         #ifdef USE_AHFINDER
         pp.load("AH_initial_guess", AH_initial_guess, emdbh_params.bh_mass*0.5);
         #endif
+        pp.load("AH_num_horizons", AH_num_horizons, 0);
+        pp.load("AH_expect_merger", AH_expect_merger, 0);
         pp.load("horizon_centre_1", horizon_centre_1,
                 {0.5 * L, 0.5 * L, 0.5 * L});
         pp.load("horizon_centre_2", horizon_centre_2,
@@ -193,6 +201,8 @@ class SimulationParameters : public SimulationParametersBase
 
     #ifdef USE_AHFINDER
     double AH_initial_guess;
+    int AH_num_horizons;
+    int AH_expect_merger;
     std::array<double, CH_SPACEDIM> horizon_centre_1;
     std::array<double, CH_SPACEDIM> horizon_centre_2;
     #endif

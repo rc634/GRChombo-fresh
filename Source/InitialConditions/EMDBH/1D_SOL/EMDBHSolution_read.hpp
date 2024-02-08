@@ -46,6 +46,8 @@ public:
     std::string Aa_dummy;
     std::string Br_dummy;
 
+    std::string m_data_path;
+
     std::string current_line;
 
     EMDBHSolution_read();
@@ -53,7 +55,7 @@ public:
     double get_value_interp(const std::vector<double>& in, const double r_) const;
     double get_deriv_interp(const std::vector<double>& in, const double r_) const;
 
-    void main();
+    void main(std::string a_data_path);
     void read_from_file();
     std::string extract_string_from_line(std::string input, int imin, int imax);
     void insert_strings_to_vecs();

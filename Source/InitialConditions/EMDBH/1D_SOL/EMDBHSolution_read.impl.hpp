@@ -10,10 +10,13 @@
 #ifndef EMDBHSOLUTION_READ_IMPL_HPP_
 #define EMDBHSOLUTION_READ_IMPL_HPP_
 
-EMDBHSolution_read::EMDBHSolution_read() {}
-
-void EMDBHSolution_read::main()
+EMDBHSolution_read::EMDBHSolution_read()
 {
+}
+
+void EMDBHSolution_read::main(std::string a_data_path)
+{
+    m_data_path = a_data_path;
     read_from_file();
 
     gridpoints = r.size();
@@ -28,7 +31,7 @@ void EMDBHSolution_read::read_from_file()
     std::ifstream readfile;
 
     // maybe guard this ??
-    readfile.open("initial_data/id_lambda-60.dat");
+    readfile.open(m_data_path);
 
 
 
