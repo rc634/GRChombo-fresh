@@ -50,9 +50,11 @@ void EMDBHSolution_read::read_from_file()
                 }
             }
 
-            if (indices.size() < 21)
+            if (indices.size() < 20)
             {
-                pout() << "Warning, cannot properly read initial data dat"
+                pout() << "Warning, cannot properly read initial data dat!"
+                       << std::endl
+                       << "Number of columns found : " << indices.size()
                        << std::endl;
             }
             else
