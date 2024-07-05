@@ -360,7 +360,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     // initial radiause of shell
     double r_0 = m_params_EMDBH.Ylm_r0;
 
-    double psi = (Y22*A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
+    double psi = (A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
 
     vars.phi += psi;
     // boosted inwards with Pi - flat space approx no outgoing wave
