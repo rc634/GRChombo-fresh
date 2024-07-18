@@ -31,11 +31,13 @@ template <class matter_t> class EMDLorentzScalars
     using MatterVars = typename MatterCCZ4<matter_t>::template Vars<data_t>;
 
     double m_dx;
+    const std::array<double, CH_SPACEDIM> m_centre;
     CouplingFunction::params_t m_coupling_params;
 
   public:
-    EMDLorentzScalars(double a_dx, CouplingFunction::params_t &a_coupling_params)
-    : m_dx(a_dx), m_coupling_params(a_coupling_params) {}
+    EMDLorentzScalars(double a_dx, std::array<double, CH_SPACEDIM> a_centre,
+                                  CouplingFunction::params_t &a_coupling_params)
+    : m_dx(a_dx), m_centre(a_centre), m_coupling_params(a_coupling_params) {}
 
     template <class data_t> void compute(Cell<data_t> current_cell) const
     {
@@ -60,10 +62,23 @@ template <class matter_t> class EMDLorentzScalars
         const auto h_UU = TensorAlgebra::compute_inverse_sym(adm_vars.h);
         auto gamma_UU = h_UU;
         FOR2(i,j) gamma_UU[i][j] = h_UU[i][j]*adm_vars.chi;
+
         const auto chris = TensorAlgebra::compute_christoffel(adm_d1.h, h_UU);
         const auto chris_phys =
                            TensorAlgebra::compute_phys_chris(adm_d1.chi, adm_vars.chi,
                                                        adm_vars.h, h_UU, chris.ULL);
+
+        // coordinates
+        Coordinates<data_t> coords(current_cell, m_dx, m_centre);
+        data_t x = coords.x, y = coords.y, z = coords.z;
+        data_t r = sqrt(x*x + y*y + z*z);
+        data_t safe_r = sqrt(r*r + 10e-20);
+        data_t rho = sqrt(x*x + y*y);
+        data_t safe_rho = sqrt(rho*rho + 10e-20);
+        data_t costheta = z/safe_r;
+        data_t sintheta = rho/safe_r;
+        data_t cosphi = x/safe_rho;
+        data_t sinphi = y/safe_rho;
 
 
         ////////////////////////////////////////////
@@ -106,24 +121,56 @@ template <class matter_t> class EMDLorentzScalars
         // calculate hamiltonian of scalar field
         ////////////////////////////////////////////
 
-        data_t phi_hamiltonian = matter_vars.Pi * matter_vars.Pi;
+        // data_t phi_hamiltonian = matter_vars.Pi * matter_vars.Pi;
+        //
+        // FOR1(i)
+        // {
+        //     phi_hamiltonian += 2. * matter_vars.Pi
+        //                           * adm_vars.shift[i] * matter_d1.phi[i];
+        // }
+        //
+        // FOR2(i,j)
+        // {
+        //     phi_hamiltonian += matter_d1.phi[i] * matter_d1.phi[j]
+        //                      * h_UU[i][j] * adm_vars.chi;
+        // }
+        //
+        // phi_hamiltonian *= root_minus_g;
 
-        FOR1(i)
-        {
-            phi_hamiltonian += 2. * matter_vars.Pi
-                                  * adm_vars.shift[i] * matter_d1.phi[i];
-        }
 
-        FOR2(i,j)
-        {
-            phi_hamiltonian += matter_d1.phi[i] * matter_d1.phi[j]
-                             * h_UU[i][j] * adm_vars.chi;
-        }
+        ////////////////////////////////////////////
+        // Jacobeans
+        ////////////////////////////////////////////
 
-        phi_hamiltonian *= root_minus_g;
+        // partial cartesian coords (i) by partial polar coords (i)
+        // dxc_dxp[i][j]
+        // i = {x,y,z}
+        // j = {r,th,ph}
+        Tensor<2, data_t, 3> dxc_dxp;
+        dxc_dxp[0][0] = x/safe_r;
+        dxc_dxp[1][0] = y/safe_r;
+        dxc_dxp[2][0] = z/safe_r;
+        dxc_dxp[0][1] = r * cosphi * costheta;
+        dxc_dxp[1][1] = r * sinphi * costheta;
+        dxc_dxp[2][1] = -r * sintheta;
+        dxc_dxp[0][2] = -r * sinphi * sintheta;
+        dxc_dxp[1][2] = r * cosphi * sintheta;
+        dxc_dxp[2][2] = 0.; // dz/dphi=0
 
-
-
+        // partial polar coords (i) by partial cartesian coords (i)
+        // dxp_dxc[i][j]
+        // i = {r,th,ph}
+        // j = {x,y,z}
+        Tensor<2, data_t, 3> dxp_dxc;
+        dxp_dxc[0][0] = x/safe_r;
+        dxp_dxc[0][1] = y/safe_r;
+        dxp_dxc[0][2] = z/safe_r;
+        dxp_dxc[1][0] = x * z / (safe_r * safe_r * safe_rho);
+        dxp_dxc[1][1] = y * z / (safe_r * safe_r * safe_rho);
+        dxp_dxc[1][2] = - rho / (safe_r * safe_r);
+        dxp_dxc[2][0] = - y / (safe_rho * safe_rho);
+        dxp_dxc[2][1] = x / (safe_rho * safe_rho);
+        dxp_dxc[2][2] = 0.; // dphi/dz=0
 
 
 
@@ -178,22 +225,74 @@ template <class matter_t> class EMDLorentzScalars
         electric_constraint = coupling_of_phi * ( electric_constraint
                                - 2. * EDphi * f_prime_of_phi );
 
-        // H2norm_maxwell_constraints = electric_constraint * electric_constraint
-        //                            + magnetic_constraint * magnetic_constraint;
+        H2norm_maxwell_constraints = electric_constraint * electric_constraint
+                                    + magnetic_constraint * magnetic_constraint;
 
 
 
         ////////////////////////////////////////////
-        // maxwell constriants
+        // Mass and Charge Scalars
         ////////////////////////////////////////////
 
+        // ADM mass calculation
+        data_t g_rr = 0.;
+        data_t ADM_scalar = 0.;
+        Tensor<1, data_t, 3> dxdr; // equiv to sL, non normalised radial normal
+        Tensor<1, data_t, 3> sU; // non-normalised unit upstairs radial vec
+        dxdr[0] = x/safe_r;
+        dxdr[1] = y/safe_r;
+        dxdr[2] = z/safe_r;
+        sU[0] = 0.;
+        sU[1] = 0.;
+        sU[2] = 0.;
+
+        FOR2(i,j)
+        {
+            sU[i] += gamma_UU[i][j]*dxdr[j];
+            g_rr += adm_vars.h[i][j]*dxdr[i]*dxdr[j]/adm_vars.chi;
+        }
+        FOR3(i,j,k)
+        {
+            ADM_scalar += sU[i]*gamma_UU[j][k]*(
+                      (adm_d1.h[i][k][j]-adm_d1.h[j][k][i])/adm_vars.chi
+                       -(adm_d1.chi[j]*adm_vars.h[i][k] -
+                         adm_d1.chi[i]*adm_vars.h[j][k])*pow(adm_vars.chi,-2));                              ;
+        }
+
+        data_t Y_00 = 1./sqrt(4.*M_PI);
+
+        // charge calculation
+        data_t EUr = 0.; // E^r
+        Tensor<1, data_t, 3> drdx;
+        drdx[0] = x/safe_r;
+        drdx[1] = y/safe_r;
+        drdx[2] = z/safe_r;
+
+        Tensor<2, data_t, 3> gamma_polar;
+        FOR2(i,j)
+        {
+            EUr += Ei[i] * drdx[j] * gamma_UU[i][j];
+            gamma_polar[i][j] = 0.;
+        }
+
+        FOR4(i,j,m,n)
+        {
+            gamma_polar[i][j] += adm_vars.h[m][n]/adm_vars.chi * dxc_dxp[m][i] * dxc_dxp[n][j];
+        }
+        data_t det_gamma_polar = TensorAlgebra::compute_determinant_sym(gamma_polar);
+        data_t root_gamma_polar = sqrt(det_gamma_polar);
+
+        data_t Q_scalar = EUr * coupling_of_phi * root_gamma_polar / sintheta;
+        Q_scalar = Q_scalar/sqrt(2. * M_PI); // from weird def of Q in lagragean
+        ADM_scalar = ADM_scalar * root_gamma_polar / (sintheta * 16. * M_PI);
 
         // store variables
-        current_cell.store_vars(phi_hamiltonian, c_phi_ham);
-        //current_cell.store_vars(sqrt(H2norm_damping), c_phi_ham);
         current_cell.store_vars(FF, c_mod_F);
-        current_cell.store_vars(electric_constraint, c_maxwellE);
-        current_cell.store_vars(magnetic_constraint, c_maxwellB);
+        current_cell.store_vars(H2norm_maxwell_constraints, c_maxwell);
+        // dividing by Y_00 makes the f_00 coeffcients actaully equal a regular
+        // integral round teh circle
+        current_cell.store_vars(ADM_scalar/Y_00, c_Mscalar);
+        current_cell.store_vars(Q_scalar/Y_00, c_Qscalar);
     }
 };
 

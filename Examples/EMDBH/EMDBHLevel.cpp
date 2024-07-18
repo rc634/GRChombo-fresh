@@ -32,6 +32,9 @@
 #include "MatterWeyl4.hpp"
 #include "WeylExtraction.hpp"
 
+// For MQ extraction
+#include "CrudeMassChargeExtraction.hpp"
+
 // FOR EM extraction_level
 #include "Pheyl2.hpp"
 #include "PheylExtraction.hpp"
@@ -120,13 +123,15 @@ void EMDBHLevel::preCheckpointLevel()
                               Interval(c_Mom1, c_Mom3)),
 
               EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>(m_dx,
+                                       m_p.extraction_params.extraction_center,
                                                  m_p.coupling_function_params),
 
               EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                               emd_field, m_dx, c_rho,
                               Interval(c_s1, c_s3), Interval(c_s11, c_s33)),
 
-              Pheyl2(m_p.extraction_params.extraction_center, m_dx)),
+              Pheyl2(m_p.extraction_params.extraction_center,
+                                      m_p.coupling_function_params, m_dx)),
 
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
@@ -167,13 +172,15 @@ void EMDBHLevel::prePlotLevel()
                 Interval(c_Mom1, c_Mom3)),
 
             EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>(m_dx,
+                                       m_p.extraction_params.extraction_center,
                                                  m_p.coupling_function_params),
 
             EMTensor<EinsteinMaxwellDilatonFieldWithCoupling>(
                 emd_field, m_dx, c_rho,
                 Interval(c_s1, c_s3), Interval(c_s11, c_s33)),
 
-            Pheyl2(m_p.extraction_params.extraction_center, m_dx)),
+                Pheyl2(m_p.extraction_params.extraction_center,
+                                        m_p.coupling_function_params, m_dx)),
 
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
@@ -300,7 +307,8 @@ void EMDBHLevel::doAnalysis()
 
         // fill grid with pheyl2 im and real components
         auto pheyl2_compute_pack = make_compute_pack(
-            Pheyl2(m_p.extraction_params.extraction_center, m_dx));
+            Pheyl2(m_p.extraction_params.extraction_center,
+                                        m_p.coupling_function_params, m_dx));
         BoxLoops::loop(pheyl2_compute_pack, m_state_new, m_state_diagnostics,
                        EXCLUDE_GHOST_CELLS);
 
@@ -352,6 +360,34 @@ void EMDBHLevel::doAnalysis()
         }
     }
 
+    // Do Mass Charge Integration
+    if (m_p.activate_mq_extraction == 1 &&
+        at_level_timestep_multiple(
+            m_p.extraction_params.min_extraction_level()))
+    {
+        CH_TIME("EMDBHLevel::doAnalysis::MassChargeExtraction");
+
+        fillAllGhosts();
+
+        // Do the extraction on the min extraction level
+        if (m_level == m_p.extraction_params.min_extraction_level())
+        {
+            if (m_verbosity)
+            {
+                pout() << "BinaryBSLevel::specificPostTimeStep:"
+                          " Extracting MassCharge integrals."
+                       << endl;
+            }
+
+            // Refresh the interpolator and do the interpolation
+            m_bh_amr.m_interpolator->refresh();
+            CrudeMassChargeExtraction mq_extraction
+                                              (m_p.mq_extraction_params,
+                                      m_dt, m_time, first_step, m_restart_time);
+            mq_extraction.execute_query(m_bh_amr.m_interpolator);
+        }
+    }
+
     // noether charge, max mod phi, min chi, constraint violations
     if (at_level_timestep_multiple(0))
     {
@@ -359,7 +395,8 @@ void EMDBHLevel::doAnalysis()
         EinsteinMaxwellDilatonFieldWithCoupling emd_field(coupling_function);
         BoxLoops::loop(
           EMDLorentzScalars<EinsteinMaxwellDilatonFieldWithCoupling>
-                                            (m_dx,m_p.coupling_function_params),
+                                 (m_dx,m_p.extraction_params.extraction_center,
+                                                 m_p.coupling_function_params),
                                                m_state_new, m_state_diagnostics,
                                                            EXCLUDE_GHOST_CELLS);
     }

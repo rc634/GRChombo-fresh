@@ -275,9 +275,9 @@ class SimulationParametersBase : public ChomboParameters
         // REALSCALAR PARAMS
         ////////////
 
-        pp.load("activate_em_extraction", activate_em_extraction, false);
+        pp.load("activate_rs_extraction", activate_rs_extraction, false);
 
-        if (activate_em_extraction)
+        if (activate_rs_extraction)
         {
             pp.load("rs_num_extraction_radii",
                     realscalar_extraction_params.num_extraction_radii, 1);
@@ -373,6 +373,107 @@ class SimulationParametersBase : public ChomboParameters
         }
 
 
+
+        ////////////
+        // MASSCHARGE PARAMS
+        ////////////
+
+        pp.load("activate_mq_extraction", activate_mq_extraction, false);
+
+        if (activate_mq_extraction)
+        {
+            pp.load("mq_num_extraction_radii",
+                    mq_extraction_params.num_extraction_radii, 1);
+
+            // Check for multiple extraction radii, otherwise load single
+            // radius/level (for backwards compatibility).
+            if (pp.contains("mq_extraction_levels"))
+            {
+                pp.load("mq_extraction_levels",
+                        mq_extraction_params.extraction_levels,
+                        mq_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("mq_extraction_level", mq_extraction_params.extraction_levels,
+                        1, 0);
+            }
+            if (pp.contains("mq_extraction_radii"))
+            {
+                pp.load("mq_extraction_radii", mq_extraction_params.extraction_radii,
+                        mq_extraction_params.num_extraction_radii);
+            }
+            else
+            {
+                pp.load("mq_extraction_radius", mq_extraction_params.extraction_radii,
+                        1, 0.1);
+            }
+
+            pp.load("mq_num_points_phi", mq_extraction_params.num_points_phi, 2);
+            pp.load("mq_num_points_theta", mq_extraction_params.num_points_theta, 5);
+            if (mq_extraction_params.num_points_theta % 2 == 0)
+            {
+                mq_extraction_params.num_points_theta += 1;
+                pout() << "Parameter: num_points_theta incompatible with "
+                          "Simpson's "
+                       << "rule so increased by 1.\n";
+            }
+            pp.load("mq_extraction_center", mq_extraction_params.center, center);
+
+            if (pp.contains("mq_modes"))
+            {
+                pp.load("mq_num_modes", mq_extraction_params.num_modes);
+                std::vector<int> mq_extraction_modes_vect(
+                    2 * mq_extraction_params.num_modes);
+                pp.load("mq_modes", mq_extraction_modes_vect,
+                        2 * mq_extraction_params.num_modes);
+                mq_extraction_params.modes.resize(mq_extraction_params.num_modes);
+                for (int i = 0; i < mq_extraction_params.num_modes; ++i)
+                {
+                    mq_extraction_params.modes[i].first =
+                        mq_extraction_modes_vect[2 * i];
+                    mq_extraction_params.modes[i].second =
+                        mq_extraction_modes_vect[2 * i + 1];
+                }
+            }
+            else
+            {
+                // by default extraction (l,m) = (2,0), (2,1) and (2,2)
+                mq_extraction_params.num_modes = 3;
+                mq_extraction_params.modes.resize(3);
+                for (int i = 0; i < 3; ++i)
+                {
+                    mq_extraction_params.modes[i].first = 2;
+                    mq_extraction_params.modes[i].second = i;
+                }
+            }
+
+            pp.load("mq_write_extraction", mq_extraction_params.write_extraction,
+                    false);
+
+            std::string mq_extraction_path;
+            if (pp.contains("mq_extraction_subpath"))
+            {
+                pp.load("mq_extraction_subpath", mq_extraction_path);
+                if (!mq_extraction_path.empty() && mq_extraction_path.back() != '/')
+                    mq_extraction_path += "/";
+                if (output_path != "./" && !output_path.empty())
+                    mq_extraction_path = output_path + mq_extraction_path;
+            }
+            else
+                mq_extraction_path = data_path;
+
+            mq_extraction_params.data_path = data_path;
+            mq_extraction_params.extraction_path = mq_extraction_path;
+
+            // default names to mq extraction
+            pp.load("mq_extraction_file_prefix",
+                    mq_extraction_params.extraction_file_prefix,
+                    std::string("MQ_extraction_"));
+            pp.load("mq_integral_file_prefix",
+                    mq_extraction_params.integral_file_prefix,
+                    std::string("MQ_mode_"));
+        }
 
 
         pp.load("flux_number_of_radii", angmomflux_params.num_extraction_radii,
@@ -555,10 +656,13 @@ class SimulationParametersBase : public ChomboParameters
 
     bool activate_extraction;
     bool activate_em_extraction;
+    bool activate_rs_extraction;
+    bool activate_mq_extraction;
     spherical_extraction_params_t extraction_params;
     spherical_extraction_params_t angmomflux_params;
     spherical_extraction_params_t pheyl2_extraction_params;
     spherical_extraction_params_t realscalar_extraction_params;
+    spherical_extraction_params_t mq_extraction_params;
     bool do_flux_integration;
 
 #ifdef USE_AHFINDER

@@ -3,37 +3,39 @@
  * Please refer to LICENSE in GRChombo's root directory.
  */
 
-#ifndef REALSCALAREXTRACTION_HPP_
-#define REALSCALAREXTRACTION_HPP_
+#ifndef CRUDEMASSCHARGEEXTRACTION_HPP_
+#define CRUDEMASSCHARGEEXTRACTION_HPP_
 
 #include "SphericalExtraction.hpp"
 
-//!  The class allows extraction of the values of the Pheyl scalar components on
+//!  The class allows crude extraction of M adn Q for EMS theory
 //!  spherical shells at specified radii, and integration over those shells
 /*!
    The class allows the user to extract data from the grid for the RealScalar
    components over spherical shells at specified radii. The values may then be
    written to an output file, or integrated across the surfaces.
 */
-class RealScalarExtraction : public SphericalExtraction
+class CrudeMassChargeExtraction : public SphericalExtraction
 {
   public:
+
     //! The constructor
-    RealScalarExtraction(spherical_extraction_params_t &a_params, double a_dt,
+    CrudeMassChargeExtraction(
+                   spherical_extraction_params_t &a_params, double a_dt,
                    double a_time, bool a_first_step,
                    double a_restart_time = 0.0)
         : SphericalExtraction(a_params, a_dt, a_time, a_first_step,
                               a_restart_time)
     {
-        add_var(c_phi, VariableType::evolution);
-        add_var(c_Pi, VariableType::evolution);
+        add_var(c_Mscalar, VariableType::diagnostic);
+        add_var(c_Qscalar, VariableType::diagnostic);
     }
 
     //! The old constructor which assumes it is called in specificPostTimeStep
     //! so the first time step is when m_time == m_dt
-    RealScalarExtraction(spherical_extraction_params_t a_params, double a_dt,
+    CrudeMassChargeExtraction(spherical_extraction_params_t a_params, double a_dt,
                    double a_time, double a_restart_time = 0.0)
-        : RealScalarExtraction(a_params, a_dt, a_time, (a_dt == a_time),
+        : CrudeMassChargeExtraction(a_params, a_dt, a_time, (a_dt == a_time),
                          a_restart_time)
     {
     }
@@ -51,15 +53,14 @@ class RealScalarExtraction : public SphericalExtraction
         std::vector<std::pair<std::vector<double>, std::vector<double>>>
             mode_integrals(m_num_modes);
 
-        // note that this is normalised by multiplying by radius
         // forse imaginary part to be zero later
-        auto normalised_RealScalar_complex =
-            [](std::vector<double> RealScalar_reim_parts, double r, double, double)
+        auto MQ_pair =
+            [](std::vector<double> MQ_parts, double r, double, double)
         {
             // here the std::vector<double> passed will just have
             // the real and imaginary parts of the scalar as its
             // only components
-            return std::make_pair(RealScalar_reim_parts[0], 0.);
+            return std::make_pair(MQ_parts[0], MQ_parts[1]);
         };
 
         // add the modes that will be integrated
@@ -68,7 +69,7 @@ class RealScalarExtraction : public SphericalExtraction
             const auto &mode = m_modes[imode];
             constexpr int es = 0; //think this is spin weight
             add_mode_integrand(es, mode.first, mode.second,
-                               normalised_RealScalar_complex,
+                               MQ_pair,
                                        mode_integrals[imode]);
         }
 
@@ -85,10 +86,10 @@ class RealScalarExtraction : public SphericalExtraction
             std::vector<std::vector<double>> integrals_for_writing = {
                 std::move(mode_integrals[imode].first),
                 std::move(mode_integrals[imode].second)};
-            std::vector<std::string> labels = {"integral Re", "integral Im"};
+            std::vector<std::string> labels = {"M(r)", "Q(r)"};
             write_integrals(integrals_filename, integrals_for_writing, labels);
         }
     }
 };
 
-#endif /* REALSCALAREXTRACTION_HPP_ */
+#endif /* CRUDEMASSCHARGEEXTRACTION_HPP_ */

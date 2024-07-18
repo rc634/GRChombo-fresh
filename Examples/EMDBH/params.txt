@@ -7,13 +7,13 @@ plot_prefix = plt/Sim_p_
 
 # Set up grid spacings and regrid params
 # NB - the N values need to be multiples of block_factor
-N1 = 64
-N2 = 64
-N3 = 64
+N1 = 128
+N2 = 128
+N3 = 128
 
 # Length of longest box side, dx_coarsest = L/N(max)
 # NB if non cubic, this determines dx for all sides
-L = 128
+L = 256
 
 # robin's manual grid centre variable
 robin_manual_origin 0. 0. 0. # currently unused
@@ -63,8 +63,8 @@ vars_parity            = 0 0 4 6 0 5 0    #chi and hij
 
 
 vars_parity_diagnostic = 0                #mod FF
-                         0 7              #maxwell E and B
-                         0                #phi hamiltonian
+                         0                #maxwell
+                         0 0              #M and Q scalars
                          0 1 2 3          #H,mom constraints
                          0 7              #Weyl4 re im
                          3 4              #Pheyl2 re im
@@ -83,8 +83,8 @@ vars_asymptotic_values = 1.0 1.0 0.0 0.0 1.0 0.0 1.0 #chi and hij
                          0.0 0.0 0.0                 #Ex Ey Ez
                          0.0                         #Xi
                          0.0                         #mod FF
-                         0.0 0.0                     #maxwell E and B
-                         0.0                         #phi hamiltonian
+                         0.0 0.0                     #maxwell
+                         1.0 0.7                     #M and Q
                          0.0 0.0 0.0 0.0             #Ham and Mom
                          0.0 0.0                     #Wely4_Re and Weyl4_Im
                          0.0 0.0                     #Pheyl2_Re and Pheyl2_Im
@@ -133,7 +133,7 @@ calculate_noether_charge = 1
 
 # Vars to write to plot files
 num_plot_vars = 26
-plot_vars = chi K lapse h11 h12 h13 h22 h23 h33 A11 A12 A13 phi Pi ax Ex Xi At Weyl4_Re Pheyl2_Re rho mod_F maxwellE maxwellB phi_ham Ham
+plot_vars = chi K lapse h11 h12 h13 h22 h23 h33 A11 A12 A13 phi Pi ax Ex Xi At Weyl4_Re Pheyl2_Re rho mod_F maxwell Mscalar Qscalar Ham
 
 # Vars to output infinity norm for at end of coarse time steps
 num_vars_inf_norm = 3
@@ -162,11 +162,11 @@ emd_alpha = 1.0 # should be 1.0 here really for contraint satisfaction
 emd_f0 = 0.0
 emd_f1 = 0.0
 emd_f2 = -7.5398223686155035 # -251.32741228718345 # multiplicative difference of 4 pi from Fabrizio
-emd_data_path = "initial_data/id_alpha0.6_ctmr1.0187_t0.dat" # must be included, or will fail with default in pp.load()
+emd_data_path = "initial_data/id_alpha0.6_ctmr1.0187_fish_eye_t0.dat" # must be included, or will fail with default in pp.load()
 
 # spherical harmonic perturbation, thin gaussian shell at large radius, boosted inwards
-Ylm_amplitude = 0.1 # 0.001 # amplitude is ~1/r in flat space
-Ylm_thickness = 3.0 # gaussian standard deviation of shell thickness
+Ylm_amplitude = 0.0 # 0.001 # amplitude is ~1/r in flat space
+Ylm_thickness = 5.0 # gaussian standard deviation of shell thickness
 Ylm_r0 = 80.0 # initial radius of perturbation shell
 
 
@@ -175,6 +175,8 @@ AH_activate = 1
 AH_verbose = 1
 AH_set_origins_to_punctures = 1
 AH_num_ranks = 0
+# AH_initial_guess = 0
+# AH_level_to_run = 0
 AH_num_horizons = 1
 AH_expect_merger = 0
 horizon_centre_1 = 50.0 0.0 0.0
@@ -256,7 +258,17 @@ em_modes = 1 0
             3 0
             4 0
 
-
+# M and Q extraction params (mq)
+#default center to grid center, uncomment to change
+mq_extraction_center = 0 0 0
+activate_mq_extraction = 1
+mq_num_extraction_radii = 3
+mq_extraction_radii = 120. 180. 240. # can use extraction_radius for one radius
+mq_extraction_levels = 0 0 0 # can use extraction_level for one radius
+mq_num_points_phi = 64 64 64
+mq_num_points_theta = 60
+mq_num_modes = 1
+mq_modes = 0 0
 
 
 

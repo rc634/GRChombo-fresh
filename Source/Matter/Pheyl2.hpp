@@ -37,6 +37,7 @@ template <class data_t> struct EMRScalar_t
 #include "TensorAlgebra.hpp"
 #include "UserVariables.hpp" //This files needs c_NUM - total number of components
 #include "simd.hpp"
+#include "EMDCouplingFunction.hpp"
 #include <array>
 
 
@@ -61,7 +62,8 @@ class Pheyl2
     /*!
         Takes in the centre for the calculation of the tetrads and grid spacing.
     */
-    Pheyl2(const std::array<double, CH_SPACEDIM> a_center, const double a_dx)
+    Pheyl2(const std::array<double, CH_SPACEDIM> a_center,
+      CouplingFunction::params_t a_params_coupling_function, const double a_dx)
         : m_center(a_center), m_dx(a_dx)
     {
     }
@@ -72,7 +74,8 @@ class Pheyl2
 
   protected:
     const std::array<double, CH_SPACEDIM> m_center; //!< The grid center
-    const double m_dx;                              //!< the grid spacing
+    const double m_dx;
+    CouplingFunction::params_t m_coupling_params;                             //!< the grid spacing
 
     //! Compute spatial volume element
     template <class data_t>

@@ -95,9 +95,13 @@ EMRScalar_t<data_t> Pheyl2::compute_Pheyl2(const Vars<data_t> &vars,
     // Calculate the tetrads
     const Tetrad_t<data_t> tetrad = compute_null_tetrad(vars, h_UU, coords);
 
+    // note, u, v, w, upstairs, E, B downstairs
+    // u, v, w, are perp to unit normal n_\mu
+
     // Electromagnetic Fields
     Tensor<1, data_t> E;
     Tensor<1, data_t> B;
+    data_t phi = emdvars.phi;
     E[0] = emdvars.Ex;
     E[1] = emdvars.Ey;
     E[2] = emdvars.Ez;
@@ -112,14 +116,22 @@ EMRScalar_t<data_t> Pheyl2::compute_Pheyl2(const Vars<data_t> &vars,
     // Calculation here
     FOR(i)
     {
-        out.Real += tetrad.v[i] * E[i];
-        out.Im += -tetrad.w[i] * E[i];
+        out.Real += 0.5 * tetrad.v[i] * E[i];
+        out.Im += -0.5 * tetrad.w[i] * E[i];
     }
     FOR(i,j,k)
     {
-        out.Real += -tetrad.v[i] * tetrad.u[j] * B[k] * epsilon3_LLU[i][j][k];
-        out.Im += tetrad.w[i] * tetrad.u[j] * B[k] * epsilon3_LLU[i][j][k];
+        out.Real += -0.5 * tetrad.v[i] * tetrad.u[j] * B[k] * epsilon3_LLU[i][j][k];
+        out.Im += 0.5 * tetrad.w[i] * tetrad.u[j] * B[k] * epsilon3_LLU[i][j][k];
     }
+
+    data_t f = m_coupling_params.f0
+             + m_coupling_params.f1 * phi
+             + m_coupling_params.f2 * phi * phi;
+
+    // the -1. in the power is becuase we already square rooted the function
+    out.Real *= exp(-1. * m_coupling_params.alpha * f);
+    out.Im *= exp(-1. * m_coupling_params.alpha * f);
 
     return out;
 }

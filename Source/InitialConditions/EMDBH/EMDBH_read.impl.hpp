@@ -90,7 +90,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     double dr_dy = (y / safe_r);
     double dr_dz = (z / safe_r);
 
-    // partial cartesian coords (i) by partial polar coords (i)
+    // partial cartesian coords (i) by partial polar coords (j)
     // dxc_dxp[i][j]
     // i = {x,y,z}
     // j = {r,th,ph}
@@ -105,7 +105,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     dxc_dxp[1][2] = r * cosphi * sintheta;
     dxc_dxp[2][2] = 0.; // dz/dphi=0
 
-    // partial polar coords (i) by partial cartesian coords (i)
+    // partial polar coords (i) by partial cartesian coords (j)
     // dxp_dxc[i][j]
     // i = {r,th,ph}
     // j = {x,y,z}
@@ -120,24 +120,43 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     dxp_dxc[2][1] = x / (safe_rho * safe_rho);
     dxp_dxc[2][2] = 0.; // dphi/dz=0
 
-    // X^2 = chi
+    // gamma_polar = 1/X^2 (a dr^2 + b r^2 (dth^2 + sin^2(th) dph^2))
     double X = m_1d_sol.get_value_interp(m_1d_sol.X,r);
+    double a = m_1d_sol.get_value_interp(m_1d_sol.a,r);
+    double b = m_1d_sol.get_value_interp(m_1d_sol.b,r);
 
-    // loading the upstairs E^r then lower with gamma_rr = 1/(X*X)
+    // spatial metrics
+    double gamma_polar[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    gamma_polar[0][0] = a/X/X;
+    gamma_polar[1][1] = b*r*r/X/X;
+    gamma_polar[2][2] = b*pow(sintheta*r/X,2);
+    double gamma_polar_inv[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    gamma_polar_inv[0][0] = 1./gamma_polar[0][0];
+    gamma_polar_inv[1][1] = 1./gamma_polar[1][1];
+    gamma_polar_inv[2][2] = 1./gamma_polar[2][2];
+    double gamma[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+    double gamma_inv[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
+
+    // create cartesian metric from transformation of polar version
+    FOR4(i,j,m,n)
+    {
+        gamma[i][j] += gamma_polar[m][n]*dxp_dxc[m][i]*dxp_dxc[n][j];
+        gamma_inv[i][j] += gamma_polar_inv[m][n]*dxc_dxp[m][i]*dxc_dxp[n][j];
+    }
+
+    // loading the upstairs E^r then lower with gamma_rr = a/(X*X)
     double E_r = m_1d_sol.get_value_interp(m_1d_sol.Er,r)*root_kappa;
-    E_r = E_r / ( X * X ) ;
+    E_r = E_r * gamma_polar[0][0];
 
     // fabrizio's mixed conformal traceless curvature, then make downstairs
-    // THIS ASSUMES DIAGONAL CONFORMALLY FLAT METRIC WITH h_rr=1
+    // THIS ASSUMES DIAGONAL METRIC
     // angular parts must give trace 0
     double AaaUL = m_1d_sol.get_value_interp(m_1d_sol.Aa,r);
-    double Arr = AaaUL / ( X * X );
     double Aij_polar[3][3] = {{0., 0., 0.}, {0., 0., 0.}, {0., 0., 0.}};
-
     // this is NOT the conformal A, its simply (K_ij-K gamma_ij/3)
-    Aij_polar[0][0] = Arr;
-    Aij_polar[1][1] = -0.5*Arr*r*r;
-    Aij_polar[2][2] = -0.5*Arr*r*r*sintheta*sintheta;
+    Aij_polar[0][0] = AaaUL*gamma_polar[0][0];
+    Aij_polar[1][1] = -0.5*AaaUL*gamma_polar[1][1];
+    Aij_polar[2][2] = -0.5*AaaUL*gamma_polar[2][2];
 
     // upstairs radial shift
     double betaR = m_1d_sol.get_value_interp(m_1d_sol.shift,r);
@@ -149,29 +168,25 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     vars.shift[2] = dz_dr * betaR;
 
     // set geometry
-    vars.chi = X*X;
+    // metric det (dummy_chi)
+    double dummy_chi = gamma[0][0]*gamma[1][1]*gamma[2][2];
+    dummy_chi += 2.*gamma[0][2]*gamma[0][1]*gamma[1][2];
+    dummy_chi -= gamma[0][0]*pow(gamma[1][2],2);
+    dummy_chi -= gamma[1][1]*pow(gamma[2][0],2);
+    dummy_chi -= gamma[2][2]*pow(gamma[0][1],2);
+    // assign real chi from power 1/3 of metric det
+    vars.chi = pow(dummy_chi,-1./3.);
     vars.K = m_1d_sol.get_value_interp(m_1d_sol.K,r);
     FOR2(i, j)
     {
-        vars.h[i][j] = 0.;
+        vars.h[i][j] = vars.chi*gamma[i][j];
         vars.A[i][j] = 0.;
-    }
-    // this loop is after previous loop to ensure h_ij diag nonzero
-    FOR1(i)
-    {
-        vars.h[i][i] = 1.;
     }
     FOR4(i,j,m,n)
     {
         // conformal decomposition here with chi
-        vars.A[i][j] += X*X * dxp_dxc[m][i] * dxp_dxc[n][j] * Aij_polar[m][n];
+        vars.A[i][j] += vars.chi * dxp_dxc[m][i] * dxp_dxc[n][j] * Aij_polar[m][n];
     }
-    // FOR2(i,j)
-    // {
-    //     vars.A[i][j] = 0.5 * vars.chi * Arr * (
-    //           3. * cart_coords[i] * cart_coords[j] / (safe_r * safe_r)
-    //           - kroneka_delta[i][j] );
-    // }
 
     // scalar field
     vars.phi = m_1d_sol.get_value_interp(m_1d_sol.phi,r)*root_kappa;
@@ -182,133 +197,6 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     vars.Ex = dr_dx * E_r;
     vars.Ey = dr_dy * E_r;
     vars.Ez = dr_dz * E_r;
-
-
-    ////////////////////////////
-    // superpose second black hole if required
-    ////////////////////////////
-
-    if (binary)
-    {
-        // coord objects
-        x = coords.x + 0.5 * separation;
-        z = coords.z;
-        y = coords.y;
-        cart_coords[0] = x;
-        cart_coords[1] = y;
-        cart_coords[2] = z;
-
-        // radii and safe (divisible) radii
-        r = sqrt(x * x + y * y + z * z);
-        safe_r = sqrt(x * x + y * y + z * z + 10e-20);
-        rho = sqrt(x * x + y * y);
-        safe_rho = sqrt(x * x + y * y + 10e-20);
-
-        // trig functions
-        sintheta = rho/safe_r;
-        costheta = z/safe_r;
-        sinphi = y/safe_rho;
-        cosphi = x/safe_rho;
-
-        // jacobeans
-        dx_dr = cosphi*sintheta;
-        dy_dr = sinphi*sintheta;
-        dz_dr = costheta;
-        dr_dx = (x / safe_r);
-        dr_dy = (y / safe_r);
-        dr_dz = (z / safe_r);
-
-        // partial cartesian coords (i) by partial polar coords (i)
-        // dxc_dxp[i][j]
-        // i = {x,y,z}
-        // j = {r,th,ph}
-        dxc_dxp[0][0] = dx_dr;
-        dxc_dxp[1][0] = dy_dr;
-        dxc_dxp[2][0] = dz_dr;
-        dxc_dxp[0][1] = r * cosphi * costheta;
-        dxc_dxp[1][1] = r * sinphi * costheta;
-        dxc_dxp[2][1] = -r * sintheta;
-        dxc_dxp[0][2] = -r * sinphi * sintheta;
-        dxc_dxp[1][2] = r * cosphi * sintheta;
-        dxc_dxp[2][2] = 0.; // dz/dphi=0
-
-        // partial polar coords (i) by partial cartesian coords (i)
-        // dxp_dxc[i][j]
-        // i = {r,th,ph}
-        // j = {x,y,z}
-        dxp_dxc[0][0] = dr_dx;
-        dxp_dxc[0][1] = dr_dy;
-        dxp_dxc[0][2] = dr_dz;
-        dxp_dxc[1][0] = x * z / (safe_r * safe_r * safe_rho);
-        dxp_dxc[1][1] = y * z / (safe_r * safe_r * safe_rho);
-        dxp_dxc[1][2] = - rho / (safe_r * safe_r);
-        dxp_dxc[2][0] = - y / (safe_rho * safe_rho);
-        dxp_dxc[2][1] = x / (safe_rho * safe_rho);
-        dxp_dxc[2][2] = 0.; // dphi/dz=0
-
-        // X^2 = chi
-        double Y = m_1d_sol.get_value_interp(m_1d_sol.X,r);
-
-        // loading the upstairs E^r then lower with gamma_rr = 1/(Y*Y)
-        E_r = m_1d_sol.get_value_interp(m_1d_sol.Er,r)*root_kappa;
-        E_r = E_r / ( Y * Y ) ;
-
-        // fabrizio's mixed conformal traceless curvature, then make downstairs
-        // THIS ASSUMES DIAGONAL CONFORMALLY FLAT METRIC WITH h_rr=1
-        // angular parts must give trace 0
-        AaaUL = m_1d_sol.get_value_interp(m_1d_sol.Aa,r);
-        Arr = AaaUL / ( Y * Y );
-
-        // this is NOT the conformal A, its simply (K_ij-K gamma_ij/3)
-        Aij_polar[0][0] = Arr;
-        Aij_polar[1][1] = -0.5*Arr*r*r;
-        Aij_polar[2][2] = -0.5*Arr*r*r*sintheta*sintheta;
-
-        // upstairs radial shift
-        betaR = m_1d_sol.get_value_interp(m_1d_sol.shift,r);
-
-        // set gauge vars
-        double alpha2 = m_1d_sol.get_value_interp(m_1d_sol.lapse,r);
-        // vars.lapse = sqrt(vars.lapse * vars.lapse + alpha2 * alpha2-1.);
-
-        vars.shift[0] += dx_dr * betaR;
-        vars.shift[1] += dy_dr * betaR;
-        vars.shift[2] += dz_dr * betaR;
-
-        // set geometry
-        vars.chi = (X*X*Y*Y)/(X*X + Y*Y - X*X*Y*Y);
-        vars.K += m_1d_sol.get_value_interp(m_1d_sol.K,r);
-
-        // lapse after chi as it needs chi
-        vars.lapse = sqrt(vars.chi);
-
-        // no need to set h_ij here as its already fine if using kroneka delta
-
-        FOR4(i,j,m,n)
-        {
-            // conformal decomposition here with chi
-            vars.A[i][j] += Y*Y * dxp_dxc[m][i] * dxp_dxc[n][j] * Aij_polar[m][n];
-        }
-        // hand done algebra check on transformation
-        // FOR2(i,j)
-        // {
-        //     vars.A[i][j] = 0.5 * vars.chi * Arr * (
-        //           3. * cart_coords[i] * cart_coords[j] / (safe_r * safe_r)
-        //           - kroneka_delta[i][j] );
-        // }
-
-        // scalar field
-        vars.phi += m_1d_sol.get_value_interp(m_1d_sol.phi,r)*root_kappa;
-        // minus sign to match Fabrizio's convention
-        vars.Pi += -m_1d_sol.get_value_interp(m_1d_sol.pi,r)*root_kappa;
-
-        // electric field
-        vars.Ex += dr_dx * E_r;
-        vars.Ey += dr_dy * E_r;
-        vars.Ez += dr_dz * E_r;
-    }
-
-
 
 
     ////////////////////////////
@@ -360,7 +248,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     // initial radiause of shell
     double r_0 = m_params_EMDBH.Ylm_r0;
 
-    double psi = (A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
+    double psi = (Y22*A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
 
     vars.phi += psi;
     // boosted inwards with Pi - flat space approx no outgoing wave
