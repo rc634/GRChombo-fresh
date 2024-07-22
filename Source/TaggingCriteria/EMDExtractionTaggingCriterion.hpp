@@ -82,8 +82,8 @@ class EMDExtractionTaggingCriterion
                             (1e-2 + abs(d1chi.chi[i] * d1chi.chi[j]));
         }
         data_t hack_coeff = 1.; // mega hacked
-        data_t hack_dx = m_dx
-             / (1. - 0.18 * pow(m_level,3)/(1. + 0.00001 * pow(m_level,7)));
+        data_t hack_dx = m_dx * pow(2,m_level)
+             / (pow(2,m_level) - 0.18 * pow(m_level,3)/(1. + 0.00001 * pow(m_level,7)));
 
         data_t criterion_phi = hack_dx * sqrt(d2_phi_ratio) / m_threshold_phi;
         data_t criterion_chi = hack_dx * sqrt(d2_chi_ratio) / m_threshold_chi;
