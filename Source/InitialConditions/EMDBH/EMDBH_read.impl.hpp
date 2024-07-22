@@ -141,7 +141,8 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     FOR4(i,j,m,n)
     {
         gamma[i][j] += gamma_polar[m][n]*dxp_dxc[m][i]*dxp_dxc[n][j];
-        gamma_inv[i][j] += gamma_polar_inv[m][n]*dxc_dxp[m][i]*dxc_dxp[n][j];
+        //gamma_inv[i][j] += gamma_polar_inv[m][n]*dxc_dxp[m][i]*dxc_dxp[n][j];
+        gamma_inv[i][j] += gamma_polar_inv[m][n]*dxc_dxp[i][m]*dxc_dxp[j][n];
     }
 
     // loading the upstairs E^r then lower with gamma_rr = a/(X*X)
@@ -248,7 +249,7 @@ template <class data_t> void EMDBH_read::compute(Cell<data_t> current_cell) cons
     // initial radiause of shell
     double r_0 = m_params_EMDBH.Ylm_r0;
 
-    double psi = (Y22*A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
+    double psi = (A/safe_r) * exp(-(r-r_0)*(r-r_0)/(2.*sig*sig));
 
     vars.phi += psi;
     // boosted inwards with Pi - flat space approx no outgoing wave
